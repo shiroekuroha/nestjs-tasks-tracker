@@ -7,6 +7,7 @@ import { CreateServerTaskDto } from './dto/create-server-task.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { TaskStatus } from './enum/task.enum';
 import { Task } from './interface/task.interface';
+import { CreateNewTaskDto } from './dto/create-new-task.dto';
 
 @Injectable()
 export class TrackerService {
@@ -37,15 +38,21 @@ export class TrackerService {
     );
   }
 
-  find(id: string): Observable<Task | null> {
-    return from(this.taskModel.findById(id).exec());
+  find(id: string, project: string) :Observable<Task | null> {
+    return  from(
+      this.taskModel.aggregate([
+        {
+          $match: { _id: id,  project: project },
+        },
+      ]),
+    );
   }
 
-  modify(id: string, updatedDto: CreateTaskDto): Observable<Task | null> {
+  modify(id: string, project: string, updatedDto: CreateTaskDto): Observable<Task | null> {
     return from(
       this.taskModel
-        .findByIdAndUpdate(
-          id,
+        .findOneAndUpdate(
+          {_id: id, project: project },
           {
             project: updatedDto.project,
             description: updatedDto.description,
@@ -58,11 +65,11 @@ export class TrackerService {
     );
   }
 
-  create(createTaskDto: CreateTaskDto): Observable<Task> {
+  create(project: string, createNewTaskDto: CreateNewTaskDto): Observable<Task> {
     let transformed: CreateServerTaskDto = {
-      project: createTaskDto.project,
-      description: createTaskDto.description,
-      status: createTaskDto.status,
+      project: project,
+      description: createNewTaskDto.description,
+      status: createNewTaskDto.status,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -70,7 +77,7 @@ export class TrackerService {
     return from(this.taskModel.create(transformed));
   }
 
-  delete(id: string): Observable<Task | null> {
-    return from(this.taskModel.findByIdAndDelete(id).exec());
+  delete(project: string, id: string): Observable<Task | null> {
+    return from(this.taskModel.findOneAndDelete({_id: id, project: project}).exec());
   }
 }

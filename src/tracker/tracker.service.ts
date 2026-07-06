@@ -1,5 +1,5 @@
 import { Model } from 'mongoose';
-import { Observable, from } from 'rxjs';
+import { Observable, forkJoin, from, map } from 'rxjs';
 
 import { Inject, Injectable } from '@nestjs/common';
 
@@ -16,64 +16,84 @@ export class TrackerService {
     private taskModel: Model<Task>,
   ) {}
 
-  getProjectTasks(
-    project: string,
-    page: number = 1,
-    limit: number = 10,
-  ): Observable<Task[]> {
-    const def_page = 1;
-    const def_limit = 10;
+  getProjectTasks(project: string, page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
 
-    page = (page && page > 0 ? page : def_page) - 1;
-    limit = limit && limit > 0 ? limit : def_limit;
-
-    return from(
-      this.taskModel
-        .find({ project: project })
-        .skip(page * limit)
-        .limit(limit)
-        .exec(),
+    return forkJoin({
+      data: from(
+        this.taskModel
+          .find({ project: project })
+          .skip(skip)
+          .limit(limit)
+          .exec(),
+      ),
+      total_count: from(
+        this.taskModel.countDocuments({ project: project }).exec(),
+      ),
+    }).pipe(
+      map(({ data, total_count }) => ({
+        data,
+        meta: {
+          page,
+          count: data.length,
+          total_page: Math.ceil(total_count / limit),
+          total_count: total_count,
+        },
+      })),
     );
   }
 
-  findAll(page: number = 1, limit: number = 10): Observable<Task[] | null> {
-    const def_page = 1;
-    const def_limit = 10;
+  findAll(page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
 
-    page = (page && page > 0 ? page : def_page) - 1;
-    limit = limit && limit > 0 ? limit : def_limit;
-
-    return from(
-      this.taskModel
-        .find()
-        .skip(page * limit)
-        .limit(limit)
-        .exec(),
+    return forkJoin({
+      data: from(this.taskModel.find().skip(skip).limit(limit).exec()),
+      total_count: from(this.taskModel.countDocuments().exec()),
+    }).pipe(
+      map(({ data, total_count }) => ({
+        data,
+        meta: {
+          page,
+          count: data.length,
+          total_page: Math.ceil(total_count / limit),
+          total_count: total_count,
+        },
+      })),
     );
   }
-
+  
   findCategory(
     project: string,
     status: TaskStatus,
     page: number = 1,
     limit: number = 10,
-  ): Observable<Task[] | null> {
-    const def_page = 1;
-    const def_limit = 10;
+  ) {
+    const skip = (page - 1) * limit;
 
-    page = (page && page > 0 ? page : def_page) - 1;
-    limit = limit && limit > 0 ? limit : def_limit;
+    const filter = {
+      project,
+      status,
+    };
 
-    return from(
-      this.taskModel
-        .aggregate([
-          {
-            $match: { project: project, status: status },
-          },
-        ])
-        .skip(page * limit)
-        .limit(limit)
-        .exec(),
+    return forkJoin({
+      data: from(
+        this.taskModel
+          .aggregate([{ $match: filter }])
+          .skip(skip)
+          .limit(limit)
+          .exec(),
+      ),
+      total_count: from(this.taskModel.countDocuments(filter).exec()),
+    }).pipe(
+      map(({ data, total_count }) => ({
+        data,
+        meta: {
+          page,
+          count: data.length,
+          total_page: Math.ceil(total_count / limit),
+          total_count,
+        },
+      })),
     );
   }
 

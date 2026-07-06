@@ -16,56 +16,107 @@ export class TrackerService {
     private taskModel: Model<Task>,
   ) {}
 
-  getCount(): Observable<number> {
-    return from(this.taskModel.countDocuments().exec());
+  getProjectTasks(
+    project: string,
+    page: number = 1,
+    limit: number = 10,
+  ): Observable<Task[]> {
+    const def_page = 1;
+    const def_limit = 10;
+
+    page = (page && page > 0 ? page : def_page) - 1;
+    limit = limit && limit > 0 ? limit : def_limit;
+
+    return from(
+      this.taskModel
+        .find({ project: project })
+        .skip(page * limit)
+        .limit(limit)
+        .exec(),
+    );
   }
 
-  getProjectTasks(project: string): Observable<Task[]> {
-    return from(this.taskModel.find({project: project}).exec());
+  findAll(page: number = 1, limit: number = 10): Observable<Task[] | null> {
+    const def_page = 1;
+    const def_limit = 10;
+
+    page = (page && page > 0 ? page : def_page) - 1;
+    limit = limit && limit > 0 ? limit : def_limit;
+
+    return from(
+      this.taskModel
+        .find()
+        .skip(page * limit)
+        .limit(limit)
+        .exec(),
+    );
   }
 
-  findAll(skip: number = 0, max: number = 10): Observable<Task[] | null> {
-    return from(this.taskModel.find().skip(skip).limit(max).exec());
+  findCategory(
+    project: string,
+    status: TaskStatus,
+    page: number = 1,
+    limit: number = 10,
+  ): Observable<Task[] | null> {
+    const def_page = 1;
+    const def_limit = 10;
+
+    page = (page && page > 0 ? page : def_page) - 1;
+    limit = limit && limit > 0 ? limit : def_limit;
+
+    return from(
+      this.taskModel
+        .aggregate([
+          {
+            $match: { project: project, status: status },
+          },
+        ])
+        .skip(page * limit)
+        .limit(limit)
+        .exec(),
+    );
   }
 
-  findCategory(project: string, status: TaskStatus): Observable<Task[] | null> {
+  find(
+    id: string,
+    project: string,
+    page: number = 1,
+    limit: number = 10,
+  ): Observable<Task | null> {
     return from(
       this.taskModel.aggregate([
         {
-          $match: { project: project, status: status },
+          $match: { _id: id, project: project },
         },
       ]),
     );
   }
 
-  find(id: string, project: string) :Observable<Task | null> {
-    return  from(
-      this.taskModel.aggregate([
-        {
-          $match: { _id: id,  project: project },
-        },
-      ]),
-    );
-  }
-
-  modify(id: string, project: string, updatedDto: CreateTaskDto): Observable<Task | null> {
+  modify(
+    id: string,
+    project: string,
+    updatedDto: CreateTaskDto,
+  ): Observable<Task | null> {
     return from(
       this.taskModel
         .findOneAndUpdate(
-          {_id: id, project: project },
+          { _id: id, project: project },
           {
             project: updatedDto.project,
             description: updatedDto.description,
             status: updatedDto.status,
             updatedAt: new Date(),
           },
-          { returnDocument: 'after' }
+          { returnDocument: 'after' },
         )
         .exec(),
     );
   }
 
-  create(project: string, createNewTaskDto: CreateNewTaskDto): Observable<Task> {
+  create(
+    project: string,
+    createNewTaskDto: CreateNewTaskDto,
+  ): Observable<Task> {
     let transformed: CreateServerTaskDto = {
       project: project,
       description: createNewTaskDto.description,
@@ -78,6 +129,8 @@ export class TrackerService {
   }
 
   delete(project: string, id: string): Observable<Task | null> {
-    return from(this.taskModel.findOneAndDelete({_id: id, project: project}).exec());
+    return from(
+      this.taskModel.findOneAndDelete({ _id: id, project: project }).exec(),
+    );
   }
 }

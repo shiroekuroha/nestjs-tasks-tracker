@@ -1,9 +1,11 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   Post,
   Put,
   Query,
@@ -22,42 +24,40 @@ import { CreateNewTaskDto } from './dto/create-new-task.dto';
 export class TrackerController {
   constructor(private readonly trackerService: TrackerService) {}
 
-  @Get('count')
-  @ApiOperation({ summary: 'Get number of existing tasks' })
-  getCount() {
-    return this.trackerService.getCount();
-  }
-
   @Get()
   @ApiOperation({ summary: 'Get all existing tasks' })
-  getAllTasks(@Query('skip') skip: number, @Query('max') max: number) {
-    if (skip && max) {
-      return this.trackerService.findAll(skip, max);
-    }
-
-    if (skip) {
-      return this.trackerService.findAll(skip);
-    }
-
-    if (max) {
-      return this.trackerService.findAll(0, max);
-    }
-
-    return this.trackerService.findAll();
+  getAllTasks(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+  ) {
+    return this.trackerService.findAll(page, limit);
   }
 
   @Get(':project')
   @ApiOperation({ summary: 'Get existing tasks belongs to project' })
   @UseGuards(AuthGuard, RoleGuard)
-  getProjectTasks(@Param('project') project: string) {
-    return this.trackerService.getProjectTasks(project);
+  getProjectTasks(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Param('project') project: string,
+  ) {
+    return this.trackerService.getProjectTasks(project, page, limit);
   }
 
   @Get(':project/todo')
   @ApiOperation({ summary: 'Get existing todo tasks belongs to project' })
   @UseGuards(AuthGuard, RoleGuard)
-  getTodoTasks(@Param('project') project: string) {
-    return this.trackerService.findCategory(project, TaskStatus.TODO);
+  getTodoTasks(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Param('project') project: string,
+  ) {
+    return this.trackerService.findCategory(
+      project,
+      TaskStatus.TODO,
+      page,
+      limit,
+    );
   }
 
   @Get(':project/in-progress')
@@ -65,15 +65,33 @@ export class TrackerController {
     summary: 'Get existing in-progress tasks belongs to project',
   })
   @UseGuards(AuthGuard, RoleGuard)
-  getInProgressTasks(@Param('project') project: string) {
-    return this.trackerService.findCategory(project, TaskStatus.IN_PROGRESS);
+  getInProgressTasks(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Param('project') project: string,
+  ) {
+    return this.trackerService.findCategory(
+      project,
+      TaskStatus.IN_PROGRESS,
+      page,
+      limit,
+    );
   }
 
   @Get(':project/done')
   @ApiOperation({ summary: 'Get existing done tasks belongs to project' })
   @UseGuards(AuthGuard, RoleGuard)
-  getDoneTasks(@Param('project') project: string) {
-    return this.trackerService.findCategory(project, TaskStatus.DONE);
+  getDoneTasks(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Param('project') project: string,
+  ) {
+    return this.trackerService.findCategory(
+      project,
+      TaskStatus.DONE,
+      page,
+      limit,
+    );
   }
 
   @Get(':project/:id')

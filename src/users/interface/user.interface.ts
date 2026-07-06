@@ -6,4 +6,5 @@ export interface User extends Document {
   username: String;
   password: String;
   roleId: String;
+  meta: [any];
 }

@@ -4,7 +4,7 @@ import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { User } from 'src/users/interface/user.interface';
 import { UsersService } from 'src/users/users.service';
 
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, forwardRef, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 @Injectable()

@@ -9,9 +9,10 @@ import { TrackerService } from './tracker.service';
 import { AuthModule } from 'src/auth/auth.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { GuardModule } from 'src/guard/guard.module';
 
 @Module({
-  imports: [DatabaseModule, UsersModule, RolesModule, AuthModule, JwtModule, 
+  imports: [DatabaseModule, UsersModule, RolesModule, GuardModule, JwtModule,
       JwtModule.registerAsync({
         imports: [ConfigModule],
         inject: [ConfigService],

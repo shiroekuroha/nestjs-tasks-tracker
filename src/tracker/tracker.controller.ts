@@ -15,9 +15,9 @@ import {
 import { CreateTaskDto } from './dto/create-task.dto';
 import { TaskStatus } from './enum/task.enum';
 import { TrackerService } from './tracker.service';
-import { AuthGuard } from 'src/auth/guard/auth.guard';
-import { RoleGuard } from 'src/auth/guard/role.guard';
 import { ApiOperation } from '@nestjs/swagger';
+import { AuthGuard } from 'src/guard/guards/auth.guard';
+import { RoleGuard } from 'src/guard/guards/role.guard';
 import { CreateNewTaskDto } from './dto/create-new-task.dto';
 
 @Controller('tasks')

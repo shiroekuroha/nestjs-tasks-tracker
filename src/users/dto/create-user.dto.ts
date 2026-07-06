@@ -10,4 +10,7 @@ export class CreateUserDto {
 
   @ApiProperty()
   roleId!: String;
+
+  @ApiProperty()
+  meta?: [any];
 }

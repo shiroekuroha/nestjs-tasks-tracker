@@ -25,13 +25,14 @@ import {
 
 import { AnalyticsInterceptor } from '../analytics/analytics.interceptor';
 import { AuthGuard } from '../security/guards/auth.guard';
+import { TaskGroupGuard } from '../security/guards/task-group.guard';
 import { CreateTaskGroupDto } from './dto/create-task-group.dto';
 import { GetTaskGroupDto } from './dto/get-task-group.dto';
 import { UpdateTaskGroupDto } from './dto/update-task-group.dto';
 import { TaskGroupService } from './task-group.service';
 
-@Controller('task-group')
-@UseGuards(AuthGuard)
+@Controller('task-groups')
+@UseGuards(AuthGuard, TaskGroupGuard)
 export class TaskGroupController {
   constructor(private readonly task_groupService: TaskGroupService) {}
 

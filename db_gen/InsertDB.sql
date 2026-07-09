@@ -438,9 +438,9 @@ INSERT INTO
 VALUES ('tasks:update'),
     ('tasks:create'),
     ('tasks:delete'),
-    ('task_groups:update'),
-    ('task_groups:create'),
-    ('task_groups:delete'),
+    ('task-groups:update'),
+    ('task-groups:create'),
+    ('task-groups:delete'),
     ('projects:add_member'),
     ('projects:remove_member'),
     ('projects:change_role');

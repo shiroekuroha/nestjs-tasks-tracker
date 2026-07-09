@@ -25,6 +25,7 @@ import {
 
 import { AnalyticsInterceptor } from '../analytics/analytics.interceptor';
 import { AuthGuard } from '../security/guards/auth.guard';
+import { TaskGuard } from '../security/guards/task.guard';
 import { CreateAttachmentDto } from './dto/create-attachment.dto';
 import { CreateCheckListDto } from './dto/create-checklist.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
@@ -35,7 +36,7 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 import { TaskService } from './task.service';
 
 @Controller('tasks')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, TaskGuard)
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
@@ -137,7 +138,24 @@ export class TaskController {
   }
 
   @UseInterceptors(AnalyticsInterceptor)
-  @Post(':id/attachments')
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse({ description: 'Task deleted.' })
+  async deleteTask(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<{ data: GetTaskDto }> {
+    const result = await this.taskService.deleteTask(id);
+
+    if (result)
+      return {
+        data: result,
+      };
+
+    throw new NotFoundException();
+  }
+
+  @UseInterceptors(AnalyticsInterceptor)
+  @Post('attachments/:id')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'Attachment created.' })
   async addAttachment(
@@ -172,7 +190,7 @@ export class TaskController {
   }
 
   @UseInterceptors(AnalyticsInterceptor)
-  @Post(':id/checklists')
+  @Post('checklists/:id')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'Checklist created.' })
   async addChecklist(

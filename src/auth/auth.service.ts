@@ -1,34 +1,32 @@
-import { firstValueFrom, from, map, Observable, switchMap } from 'rxjs';
-import { CreateUserDto } from 'src/users/dto/create-user.dto';
-import { User } from 'src/users/interface/user.interface';
-import { UsersService } from 'src/users/users.service';
-
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
+
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly usersService: UsersService,
+    private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
   ) {}
 
-  signIn(username: string, password: string) {
-    return this.usersService.find(username).pipe(
-      map(async (user) => {
-        if (!user) {
-          throw new UnauthorizedException();
-        }
+  async signIn(
+    username: string,
+    password: string,
+  ): Promise<{ access_token: string }> {
+    const member = await this.prisma.members.findFirst({
+      where: { username: username, password: password, active: true },
+    });
 
-        const payload = {
-          sub: user._id,
-          username: user.username,
-        };
+    if (member) {
+      const payload = {
+        sub: member.id,
+        username: member.username,
+      };
 
-        return { access_token: await this.jwtService.signAsync(payload)};
-      }),
-    );
+      return { access_token: await this.jwtService.signAsync(payload) };
+    }
+
+    throw new UnauthorizedException();
   }
 }

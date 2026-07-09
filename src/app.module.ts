@@ -1,27 +1,29 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { JwtModule } from '@nestjs/jwt';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
-import { RolesModule } from './roles/roles.module';
-import { TrackerModule } from './tracker/tracker.module';
-import { UsersModule } from './users/users.module';
+import { MemberModule } from './member/member.module';
+import { PrismaModule } from './prisma/prisma.module';
+import { PrismaService } from './prisma/prisma.service';
+import { ProjectModule } from './project/project.module';
+import { RoleModule } from './role/role.module';
+import { SecurityModule } from './security/security.module';
+import { TaskGroupModule } from './task-group/task-group.module';
+import { TaskModule } from './task/task.module';
 
 @Module({
   imports: [
-    TrackerModule,
+    PrismaModule,
+    MemberModule,
     AuthModule,
-    UsersModule,
-    RolesModule,
-    JwtModule,
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: '.env'
-    }),
+    SecurityModule,
+    RoleModule,
+    ProjectModule,
+    TaskGroupModule,
+    TaskModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, PrismaService],
 })
 export class AppModule {}

@@ -1,7 +1,8 @@
 # NestJS
+
 - Module
 - Controller
-	- Routing
+  - Routing
 - Middleware
 - Interceptor
 - Provider
@@ -12,21 +13,23 @@
 - Decorators
 - Unit Test(\*.spec.ts)
 - Concepts:
-	- Dependencies Injection
-	- Circular Dependencies
-	- Input Validation, Output Sanitation
+  - Dependencies Injection
+  - Circular Dependencies
+  - Input Validation, Output Sanitation
 - Tools:
-	- Swagger API implementation/documentation
-	- JWTModule
+  - Swagger API implementation/documentation
+  - JWTModule
 
 # Security
+
 - Authentication
-	- Session vs Token
+  - Session vs Token
 - Authorization
-	- Route Guard, Role Guard
-- Access Token vs Refresh Token 
+  - Route Guard, Role Guard
+- Access Token vs Refresh Token
 
 # MISC:
+
 - Logging Level
 - Repository
 - Throughput

@@ -32,40 +32,38 @@ export class MemberService {
   }
 
   async getMemberById(id: number): Promise<GetMemberDto | null> {
-    const data = await this.prisma.members.findFirst({
-      where: { id: id, active: true },
-    });
-
-    if (!data) return null;
-
-    return plainToInstance(GetMemberDto, data, {
-      excludeExtraneousValues: true,
-    });
+    return plainToInstance(
+      GetMemberDto,
+      await this.prisma.members.findFirst({
+        where: { id: id, active: true },
+      }),
+      {
+        excludeExtraneousValues: true,
+      },
+    );
   }
 
   async getMemberByUsername(username: string): Promise<GetMemberDto | null> {
-    const data = await this.prisma.members.findFirst({
-      where: { username: username, active: true },
-    });
-
-    if (!data) return null;
-
-    return plainToInstance(GetMemberDto, data, {
-      excludeExtraneousValues: true,
-    });
+    return plainToInstance(
+      GetMemberDto,
+      await this.prisma.members.findFirst({
+        where: { username: username, active: true },
+      }),
+      {
+        excludeExtraneousValues: true,
+      },
+    );
   }
 
   async updateMemberById(
     id: number,
     data: UpdateMemberDto,
   ): Promise<GetMemberDto | null> {
-    const member = await this.getMemberById(id);
-
-    if (member) {
+    try {
       return plainToInstance(
         GetMemberDto,
         await this.prisma.members.update({
-          where: { id: member.id },
+          where: { id: id, active: true },
           data: {
             ...data,
           },
@@ -74,33 +72,33 @@ export class MemberService {
           excludeExtraneousValues: true,
         },
       );
+    } catch {
+      return null;
     }
-
-    return null;
   }
 
   async updateMemberByUsername(
     username: string,
     data: UpdateMemberDto,
   ): Promise<GetMemberDto | null> {
-    const member = await this.getMemberByUsername(username);
-
-    if (member) {
+    try {
       return plainToInstance(
         GetMemberDto,
-        await this.prisma.members.update({
-          where: { id: member.id },
-          data: {
-            ...data,
-          },
-        }),
+        (
+          await this.prisma.members.updateManyAndReturn({
+            where: { username: username, active: true },
+            data: {
+              ...data,
+            },
+          })
+        ).at(0),
         {
           excludeExtraneousValues: true,
         },
       );
+    } catch {
+      return null;
     }
-
-    return null;
   }
 
   async createMember(data: CreateMemberDto): Promise<GetMemberDto> {
@@ -122,38 +120,38 @@ export class MemberService {
   }
 
   async deleteMemberById(id: number): Promise<GetMemberDto | null> {
-    const member = await this.getMemberById(id);
-
-    if (member)
+    try {
       return plainToInstance(
         GetMemberDto,
         await this.prisma.members.update({
-          where: { id: member.id },
+          where: { id: id, active: true },
           data: { active: false },
         }),
         {
           excludeExtraneousValues: true,
         },
       );
-
-    return null;
+    } catch {
+      return null;
+    }
   }
 
   async deleteMemberByUsername(username: string): Promise<GetMemberDto | null> {
-    const member = await this.getMemberByUsername(username);
-
-    if (member)
+    try {
       return plainToInstance(
         GetMemberDto,
-        await this.prisma.members.update({
-          where: { id: member.id },
-          data: { active: false },
-        }),
+        (
+          await this.prisma.members.updateManyAndReturn({
+            where: { username: username, active: true },
+            data: { active: false },
+          })
+        ).at(0),
         {
           excludeExtraneousValues: true,
         },
       );
-
-    return null;
+    } catch {
+      return null;
+    }
   }
 }

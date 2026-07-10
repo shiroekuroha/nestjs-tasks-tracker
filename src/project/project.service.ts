@@ -49,7 +49,7 @@ export class ProjectService {
         await this.prisma.projects.update({ where: { id: id }, data }),
         { excludeExtraneousValues: true },
       );
-    } catch (err) {
+    } catch {
       return null;
     }
   }
@@ -69,7 +69,7 @@ export class ProjectService {
         await this.prisma.projects.delete({ where: { id: id } }),
         { excludeExtraneousValues: true },
       );
-    } catch (err) {
+    } catch {
       return null;
     }
   }

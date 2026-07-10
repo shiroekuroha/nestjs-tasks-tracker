@@ -131,7 +131,7 @@ export class TaskController {
   async createTask(
     @Body() data: CreateTaskDto,
     @Param('task_group_id', ParseIntPipe) task_group_id: number,
-  ): Promise<{ data: GetTaskDto }> {
+  ): Promise<{ data: GetTaskDto | null }> {
     return {
       data: await this.taskService.createTask(data, task_group_id),
     };

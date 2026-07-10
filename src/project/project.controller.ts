@@ -188,7 +188,7 @@ export class ProjectController {
     description: 'Project member added.',
   })
   @ApiNotFoundResponse({
-    description: 'Project/Member not found.',
+    description: 'Project/Member or role not found.',
   })
   async addProjectMember(
     @Param('id', ParseIntPipe) pid: number,
@@ -235,7 +235,7 @@ export class ProjectController {
     description: 'Project members role changed.',
   })
   @ApiNotFoundResponse({
-    description: 'Project/Member not found.',
+    description: 'Project/Member or role not found.',
   })
   async changeProjectMemberRole(
     @Param('id', ParseIntPipe) pid: number,

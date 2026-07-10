@@ -81,16 +81,20 @@ export class TaskGroupService {
   async createTaskGroup(
     data: CreateTaskGroupDto,
     project_id: number,
-  ): Promise<GetTaskGroupDto> {
-    return plainToInstance(
-      GetTaskGroupDto,
-      await this.prisma.task_groups.create({
-        data: { ...data, projects: { connect: { id: project_id } } },
-      }),
-      {
-        excludeExtraneousValues: true,
-      },
-    );
+  ): Promise<GetTaskGroupDto | null> {
+    try {
+      return plainToInstance(
+        GetTaskGroupDto,
+        await this.prisma.task_groups.create({
+          data: { ...data, projects: { connect: { id: project_id } } },
+        }),
+        {
+          excludeExtraneousValues: true,
+        },
+      );
+    } catch {
+      return null;
+    }
   }
 
   async deleteTaskGroup(id: number): Promise<GetTaskGroupDto | null> {

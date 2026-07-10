@@ -16,114 +16,78 @@ export class TaskGroupGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const payload: { sub: number; username: string } = request['user'];
-    const task_id: number = request.params['id'];
+    const res_type: string = 'task-groups';
+    const task_group_id: number = request.params['id'];
 
     try {
-      await this.prisma.tasks.findUnique({
-        where: {
-          id: task_id,
-        },
-      });
-    } catch {}
-
-    const project = await this.getProject(task_id);
-
-    if (!project) return false;
-
-    const permissions = await this.getProjectMemberPermission(
-      project.id,
-      payload.sub,
-    );
-
-    switch (request.method) {
-      case 'PUT':
-        permissions?.find((value) => {
-          const [res, act] = value.split(':');
-          if (res == 'task-groups' && act === 'update') return true;
-
-          return false;
-        });
-        break;
-
-      case 'POST':
-        permissions?.find((value) => {
-          const [res, act] = value.split(':');
-          if (res == 'task-groups' && act === 'create') return true;
-
-          return false;
-        });
-        break;
-
-      case 'DELETE':
-        permissions?.find((value) => {
-          const [res, act] = value.split(':');
-          if (res == 'task-groups' && act === 'delete') return true;
-
-          return false;
-        });
-        break;
-
-      default:
-        return true;
-        break;
-    }
-
-    return true;
-  }
-
-  async getProject(task_id: number): Promise<GetProjectDto | null> {
-    return plainToInstance(
-      GetProjectDto,
-      await this.prisma.projects.findUnique({
-        where: {
-          id: (
-            await this.prisma.task_groups.findUnique({
-              where: {
-                id: Number(task_id),
-              },
-            })
-          )?.project_id,
-        },
-      }),
-      {
-        excludeExtraneousValues: true,
-      },
-    );
-  }
-
-  async getProjectMemberPermission(
-    project_id: number,
-    member_id: number,
-  ): Promise<string[] | null> {
-    const role_id = (
-      await this.prisma.project_members.findUnique({
-        where: {
-          project_id_member_id: {
-            project_id: project_id,
-            member_id: member_id,
-          },
-        },
-      })
-    )?.role_id;
-
-    if (role_id)
-      return (
+      const result =
         (
-          await this.prisma.roles.findUnique({
-            where: {
-              id: role_id,
-            },
+          await this.prisma.task_groups.findUnique({
+            where: { id: task_group_id },
             include: {
-              role_permissions: {
+              projects: {
                 include: {
-                  permissions: true,
+                  project_members: {
+                    where: {
+                      member_id: payload.sub,
+                    },
+                    include: {
+                      roles: {
+                        include: {
+                          role_permissions: {
+                            include: {
+                              permissions: true,
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
                 },
               },
             },
           })
-        )?.role_permissions.map((rp) => rp.permissions.name) ?? []
-      );
+        )?.projects.project_members
+          .at(0)
+          ?.roles?.role_permissions.map(
+            (permission) => permission.permissions.name,
+          ) ?? [];
 
-    return null;
+      switch (request.method) {
+        case 'PUT':
+          result?.find((value) => {
+            const [res, act] = value.split(':');
+            if (res == res_type && act === 'update') return true;
+
+            return false;
+          });
+          break;
+
+        case 'POST':
+          result?.find((value) => {
+            const [res, act] = value.split(':');
+            if (res == res_type && act === 'create') return true;
+
+            return false;
+          });
+          break;
+
+        case 'DELETE':
+          result?.find((value) => {
+            const [res, act] = value.split(':');
+            if (res == res_type && act === 'delete') return true;
+
+            return false;
+          });
+          break;
+
+        default:
+          return true;
+      }
+
+      return false;
+    } catch (err) {
+      return false;
+    }
   }
 }

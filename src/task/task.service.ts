@@ -85,21 +85,25 @@ export class TaskService {
   async createTask(
     data: CreateTaskDto,
     task_group_id: number,
-  ): Promise<GetTaskDto> {
-    return plainToInstance(
-      GetTaskDto,
-      await this.prisma.tasks.create({
-        data: {
-          ...data,
-          created_at: new Date(),
-          updated_at: new Date(),
-          task_groups: { connect: { id: task_group_id } },
+  ): Promise<GetTaskDto | null> {
+    try {
+      return plainToInstance(
+        GetTaskDto,
+        await this.prisma.tasks.create({
+          data: {
+            ...data,
+            created_at: new Date(),
+            updated_at: new Date(),
+            task_groups: { connect: { id: task_group_id } },
+          },
+        }),
+        {
+          excludeExtraneousValues: true,
         },
-      }),
-      {
-        excludeExtraneousValues: true,
-      },
-    );
+      );
+    } catch {
+      return null;
+    }
   }
 
   async deleteTask(id: number): Promise<GetTaskDto | null> {
@@ -120,7 +124,7 @@ export class TaskService {
     tid: number,
     data: CreateAttachmentDto,
   ): Promise<GetAttachmentDto | null> {
-    if (await this.getTask(tid)) {
+    try {
       return plainToInstance(
         GetAttachmentDto,
         await this.prisma.attachments.create({
@@ -132,9 +136,9 @@ export class TaskService {
         }),
         { excludeExtraneousValues: true },
       );
+    } catch {
+      return null;
     }
-
-    return null;
   }
 
   async removeAttachment(id: number): Promise<GetAttachmentDto | null> {
@@ -155,7 +159,7 @@ export class TaskService {
     tid: number,
     data: CreateCheckListDto,
   ): Promise<GetCheckListDto | null> {
-    if (await this.getTask(tid)) {
+    try {
       return plainToInstance(
         GetCheckListDto,
         await this.prisma.check_lists.create({
@@ -166,9 +170,9 @@ export class TaskService {
         }),
         { excludeExtraneousValues: true },
       );
+    } catch {
+      return null;
     }
-
-    return null;
   }
 
   async removeCheckList(id: number): Promise<GetCheckListDto | null> {

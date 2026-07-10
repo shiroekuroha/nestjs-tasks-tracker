@@ -5,6 +5,4 @@ import { PrismaService } from '../prisma/prisma.service';
 @Injectable()
 export class SecurityService {
   constructor(private prisma: PrismaService) {}
-
-    
 }

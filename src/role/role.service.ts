@@ -104,7 +104,7 @@ export class RoleService {
               },
             },
           })
-        )?.role_permissions.flatMap((rp) => rp.permissions.name),
+        )?.role_permissions.map((rp) => rp.permissions.name),
       },
       { excludeExtraneousValues: true },
     );

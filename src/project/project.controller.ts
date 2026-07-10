@@ -35,7 +35,7 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { ProjectService } from './project.service';
 
 @Controller('projects')
-@UseGuards(AuthGuard, ProjectGuard)
+@UseGuards(AuthGuard)
 export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
@@ -193,12 +193,12 @@ export class ProjectController {
   async addProjectMember(
     @Param('id', ParseIntPipe) pid: number,
     @Param('mid', ParseIntPipe) mid: number,
-    @Query('rid') role_id: number,
+    @Query('rid', new ParseIntPipe({ optional: true })) role_id: number,
   ): Promise<{ data: GetProjectMemberDto }> {
     const result = await this.projectService.addProjectMember(
       pid,
       mid,
-      role_id,
+      role_id ?? null,
     );
 
     if (result) return { data: result };
@@ -207,7 +207,7 @@ export class ProjectController {
   }
 
   @UseInterceptors(AnalyticsInterceptor)
-  @Delete(':pid/members/:mid')
+  @Delete(':id/members/:mid')
   @UseGuards(ProjectMemberGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse({
@@ -217,7 +217,7 @@ export class ProjectController {
     description: 'Project/Member not found.',
   })
   async removeProjectMember(
-    @Param('pid', ParseIntPipe) pid: number,
+    @Param('id', ParseIntPipe) pid: number,
     @Param('mid', ParseIntPipe) mid: number,
   ): Promise<{ data: GetProjectMemberDto }> {
     const result = await this.projectService.removeProjectMember(pid, mid);
@@ -229,7 +229,7 @@ export class ProjectController {
 
   @UseInterceptors(AnalyticsInterceptor)
   @Put(':id/members/:mid/role/:rid')
-  @UseGuards(AuthGuard, ProjectGuard, ProjectMemberGuard)
+  @UseGuards(ProjectMemberGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
     description: 'Project members role changed.',

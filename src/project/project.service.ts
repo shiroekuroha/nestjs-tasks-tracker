@@ -107,58 +107,43 @@ export class ProjectService {
     mid: number,
     role_id: number | null = null,
   ): Promise<GetProjectMemberDto | null> {
-    if (
-      (await this.getProject(pid)) &&
-      (await this.prisma.members.findUnique({
-        where: { id: mid, active: true },
-      })) &&
-      ((role_id != null &&
-        (await this.prisma.roles.findUnique({
-          where: { id: Number(role_id) },
-        }))) ||
-        role_id == null)
-    ) {
+    try {
       return plainToInstance(
         GetProjectMemberDto,
         await this.prisma.project_members.create({
-          data: { project_id: pid, member_id: mid, role_id: Number(role_id) },
+          data: {
+            project_id: pid,
+            member_id: mid,
+            role_id: role_id,
+          },
         }),
         { excludeExtraneousValues: true },
       );
+    } catch {
+      return null;
     }
-
-    return null;
   }
 
   async removeProjectMember(
     pid: number,
     mid: number,
   ): Promise<GetProjectMemberDto | null> {
-    if (
-      (await this.getProject(pid)) &&
-      (await this.prisma.members.findUnique({
-        where: { id: mid, active: true },
-      }))
-    ) {
-      try {
-        return plainToInstance(
-          GetProjectMemberDto,
-          await this.prisma.project_members.delete({
-            where: {
-              project_id_member_id: {
-                project_id: pid,
-                member_id: mid,
-              },
+    try {
+      return plainToInstance(
+        GetProjectMemberDto,
+        await this.prisma.project_members.delete({
+          where: {
+            project_id_member_id: {
+              project_id: pid,
+              member_id: mid,
             },
-          }),
-          { excludeExtraneousValues: true },
-        );
-      } catch {
-        return null;
-      }
+          },
+        }),
+        { excludeExtraneousValues: true },
+      );
+    } catch {
+      return null;
     }
-
-    return null;
   }
 
   async changeProjectMemberRole(
@@ -166,32 +151,24 @@ export class ProjectService {
     mid: number,
     rid: number,
   ): Promise<GetProjectMemberDto | null> {
-    if (
-      (await this.getProject(pid)) &&
-      (await this.prisma.members.findUnique({
-        where: { id: mid, active: true },
-      }))
-    ) {
-      try {
-        return plainToInstance(
-          GetProjectMemberDto,
-          await this.prisma.project_members.update({
-            where: {
-              project_id_member_id: {
-                project_id: pid,
-                member_id: mid,
-              },
+    try {
+      return plainToInstance(
+        GetProjectMemberDto,
+        await this.prisma.project_members.update({
+          where: {
+            project_id_member_id: {
+              project_id: pid,
+              member_id: mid,
             },
-            data: {
-              role_id: rid,
-            },
-          }),
-        );
-      } catch {
-        return null;
-      }
+          },
+          data: {
+            role_id: rid,
+          },
+        }),
+        { excludeExtraneousValues: true },
+      );
+    } catch {
+      return null;
     }
-
-    return null;
   }
 }

@@ -32,7 +32,7 @@ import { UpdateTaskGroupDto } from './dto/update-task-group.dto';
 import { TaskGroupService } from './task-group.service';
 
 @Controller('task-groups')
-@UseGuards(AuthGuard, TaskGroupGuard)
+@UseGuards(AuthGuard)
 export class TaskGroupController {
   constructor(private readonly task_groupService: TaskGroupService) {}
 

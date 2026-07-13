@@ -1,6 +1,9 @@
+import { plainToInstance } from 'class-transformer';
+
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
+import { GetMemberDto } from '../member/dto/get-member.dto';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -9,6 +12,24 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
   ) {}
+
+  async verify(access_token: string | null): Promise<GetMemberDto> {
+    if (!access_token) throw new UnauthorizedException();
+
+    try {
+      return plainToInstance(
+        GetMemberDto,
+        await this.prisma.members.findUnique({
+          where: {
+            id: (await this.jwtService.verifyAsync(access_token)).sub,
+          },
+        }),
+        { excludeExtraneousValues: true },
+      );
+    } catch {
+      throw new UnauthorizedException();
+    }
+  }
 
   async signIn(
     username: string,

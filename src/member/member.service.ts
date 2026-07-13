@@ -3,6 +3,7 @@ import { plainToInstance } from 'class-transformer';
 import { ForbiddenException, Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { GetProjectDto } from '../project/dto/get-project.dto';
 import { CreateMemberDto } from './dto/create-member.dto';
 import { GetMemberDto } from './dto/get-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
@@ -29,6 +30,25 @@ export class MemberService {
 
   async getMemberCount(): Promise<number> {
     return await this.prisma.members.count({ where: { active: true } });
+  }
+
+  async getMemberProjects(id: number): Promise<GetProjectDto[]> {
+    return (
+      (
+        await this.prisma.members.findUnique({
+          where: {
+            id: id,
+          },
+          include: {
+            project_members: {
+              include: {
+                projects: true,
+              },
+            },
+          },
+        })
+      )?.project_members.map((value) => value.projects) ?? []
+    );
   }
 
   async getMemberById(id: number): Promise<GetMemberDto | null> {

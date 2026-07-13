@@ -27,6 +27,7 @@ import { AnalyticsInterceptor } from '../analytics/analytics.interceptor';
 import { AuthGuard } from '../security/guards/auth.guard';
 import { ProjectMemberGuard } from '../security/guards/project-member.guard';
 import { ProjectGuard } from '../security/guards/project.guard';
+import { CreateTaskDto } from '../task/dto/create-task.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { GetProjectMemberDto } from './dto/get-project-member.dto';
 import { GetProjectMembersDto } from './dto/get-project-members.dto';
@@ -140,7 +141,7 @@ export class ProjectController {
   @UseInterceptors(AnalyticsInterceptor)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOkResponse({
+  @ApiNoContentResponse({
     description: 'Project deleted.',
   })
   @ApiNotFoundResponse({
@@ -150,6 +151,27 @@ export class ProjectController {
     @Param('id', ParseIntPipe) id: number,
   ): Promise<{ data: GetProjectDto }> {
     const result = await this.projectService.deleteProject(id);
+
+    if (result) return { data: result };
+
+    throw new NotFoundException();
+  }
+
+  @UseInterceptors(AnalyticsInterceptor)
+  @Get(':id/whole')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({
+    description: 'Project deleted.',
+  })
+  @ApiNotFoundResponse({
+    description: 'Project not found.',
+  })
+  async getProjectWhole(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<{ data: any }> {
+    const result = await this.projectService.getProjectWhole(id);
+
+    console.log(result);
 
     if (result) return { data: result };
 

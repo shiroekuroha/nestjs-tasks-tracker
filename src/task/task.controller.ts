@@ -36,7 +36,7 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 import { TaskService } from './task.service';
 
 @Controller('tasks')
-@UseGuards(AuthGuard, TaskGuard)
+@UseGuards(AuthGuard)
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
@@ -101,7 +101,12 @@ export class TaskController {
     @Param('id', ParseIntPipe) id: number,
     @Body() data: UpdateTaskDto,
   ): Promise<{ data: GetTaskDto }> {
+    console.log(id);
+    console.log(data);
+
     const result = await this.taskService.updateTask(id, data);
+
+    console.log(result);
 
     if (result) return { data: result };
 

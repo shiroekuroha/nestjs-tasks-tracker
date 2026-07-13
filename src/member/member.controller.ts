@@ -24,6 +24,7 @@ import {
 } from '@nestjs/swagger';
 
 import { AnalyticsInterceptor } from '../analytics/analytics.interceptor';
+import { GetProjectDto } from '../project/dto/get-project.dto';
 import { AuthGuard } from '../security/guards/auth.guard';
 import { CreateMemberDto } from './dto/create-member.dto';
 import { GetMemberDto } from './dto/get-member.dto';
@@ -78,6 +79,17 @@ export class MemberController {
         total_items: count,
       },
     };
+  }
+
+  @UseInterceptors(AnalyticsInterceptor)
+  @Get('id/:id/projects')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ description: 'Member found.' })
+  @ApiNotFoundResponse({ description: 'Member not found.' })
+  async getMemberProjects(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<{ data: GetProjectDto[] }> {
+    return { data: await this.memberService.getMemberProjects(id) };
   }
 
   @UseInterceptors(AnalyticsInterceptor)

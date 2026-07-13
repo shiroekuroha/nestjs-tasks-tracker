@@ -4,6 +4,10 @@ import { Injectable } from '@nestjs/common';
 
 import { GetMemberDto } from '../member/dto/get-member.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { TaskGroupService } from '../task-group/task-group.service';
+import { CreateTaskDto } from '../task/dto/create-task.dto';
+import { GetTaskDto } from '../task/dto/get-task.dto';
+import { TaskService } from '../task/task.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { GetProjectMemberDto } from './dto/get-project-member.dto';
 import { GetProjectMembersDto } from './dto/get-project-members.dto';
@@ -72,6 +76,56 @@ export class ProjectService {
     } catch {
       return null;
     }
+  }
+
+  async getProjectWhole(id: number): Promise<any | null> {
+    return await this.prisma.projects.findUnique({
+      where: { id: id },
+      include: {
+        project_members: {
+          include: {
+            members: {
+              select: {
+                id: true,
+                username: true,
+                first_name: true,
+                last_name: true,
+                birthdate: true,
+                email: true,
+                phone: true,
+                address: true,
+              },
+            },
+          },
+        },
+        task_groups: {
+          include: {
+            tasks: {
+              include: {
+                task_members: {
+                  include: {
+                    members: {
+                      select: {
+                        id: true,
+                        username: true,
+                        first_name: true,
+                        last_name: true,
+                        birthdate: true,
+                        email: true,
+                        phone: true,
+                        address: true,
+                      },
+                    },
+                  },
+                },
+                attachments: true,
+                check_lists: true,
+              },
+            },
+          },
+        },
+      },
+    });
   }
 
   async getProjectMembers(id: number): Promise<GetProjectMembersDto | null> {

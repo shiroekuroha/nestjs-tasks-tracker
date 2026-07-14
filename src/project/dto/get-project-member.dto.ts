@@ -5,13 +5,13 @@ import { ApiProperty } from '@nestjs/swagger';
 export class GetProjectMemberDto {
   @ApiProperty()
   @Expose()
-  project_id!: number;
+  projectId!: number;
 
   @ApiProperty()
   @Expose()
-  member_id!: number;
+  memberId!: number;
 
   @ApiProperty()
   @Expose()
-  role_id?: number;
+  roleId?: number;
 }

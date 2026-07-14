@@ -1,10 +1,16 @@
 import { plainToInstance } from 'class-transformer';
+import { Min } from 'class-validator';
 
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 
+import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateRoleDto } from './dto/create-role.dto';
-import { GetRolePermissionsDto } from './dto/get-role-permissions.dto';
+import { GetPermissionDto } from './dto/get-permission.dto';
 import { GetRoleDto } from './dto/get-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 
@@ -15,7 +21,7 @@ export class RoleService {
   async getRoles(page: number, limit: number): Promise<GetRoleDto[]> {
     return plainToInstance(
       GetRoleDto,
-      await this.prisma.roles.findMany({
+      await this.prisma.role.findMany({
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -26,27 +32,24 @@ export class RoleService {
   }
 
   async getRoleCount(): Promise<number> {
-    return await this.prisma.roles.count();
+    return await this.prisma.role.count();
   }
 
   async getRole(id: number): Promise<GetRoleDto | null> {
     return plainToInstance(
       GetRoleDto,
-      await this.prisma.roles.findUnique({ where: { id: id } }),
+      await this.prisma.role.findUnique({ where: { id: id } }),
       {
         excludeExtraneousValues: true,
       },
     );
   }
 
-  async updateRole(
-    id: number,
-    data: UpdateRoleDto,
-  ): Promise<GetRoleDto | null> {
+  async updateRole(id: number, data: UpdateRoleDto): Promise<GetRoleDto> {
     try {
       return plainToInstance(
         GetRoleDto,
-        await this.prisma.roles.update({
+        await this.prisma.role.update({
           where: { id: id },
           data: { ...data },
         }),
@@ -54,58 +57,93 @@ export class RoleService {
           excludeExtraneousValues: true,
         },
       );
-    } catch {
-      return null;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new BadRequestException({
+          prismaVersion: error.clientVersion,
+          prismaCode: error.code,
+          prismaError: error.message,
+        });
+      } else {
+        console.log(error);
+        throw new InternalServerErrorException();
+      }
     }
   }
 
   async createRole(data: CreateRoleDto): Promise<GetRoleDto> {
-    return plainToInstance(
-      GetRoleDto,
-      await this.prisma.roles.create({ data: { ...data } }),
-      {
-        excludeExtraneousValues: true,
-      },
-    );
-  }
-
-  async deleteRole(id: number): Promise<GetRoleDto | null> {
     try {
       return plainToInstance(
         GetRoleDto,
-        await this.prisma.roles.delete({ where: { id: id } }),
+        await this.prisma.role.create({ data: { ...data } }),
         {
           excludeExtraneousValues: true,
         },
       );
-    } catch {
-      return null;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new BadRequestException({
+          prismaVersion: error.clientVersion,
+          prismaCode: error.code,
+          prismaError: error.message,
+        });
+      } else {
+        console.log(error);
+        throw new InternalServerErrorException();
+      }
     }
   }
 
-  async rolePermissions(id: number): Promise<GetRolePermissionsDto | null> {
+  async deleteRole(id: number): Promise<GetRoleDto> {
+    try {
+      return plainToInstance(
+        GetRoleDto,
+        await this.prisma.role.delete({ where: { id: id } }),
+        {
+          excludeExtraneousValues: true,
+        },
+      );
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new BadRequestException({
+          prismaVersion: error.clientVersion,
+          prismaCode: error.code,
+          prismaError: error.message,
+        });
+      } else {
+        console.log(error);
+        throw new InternalServerErrorException();
+      }
+    }
+  }
+
+  async rolePermissions(id: number): Promise<GetPermissionDto[]> {
     return plainToInstance(
-      GetRolePermissionsDto,
-      {
-        permissions: (
-          await this.prisma.roles.findUnique({
-            where: {
-              id: id,
-            },
-            include: {
-              role_permissions: {
-                select: {
-                  permissions: {
-                    select: {
-                      name: true,
-                    },
+      GetPermissionDto,
+      (
+        await this.prisma.role.findUnique({
+          where: {
+            id: id,
+          },
+          include: {
+            rolePermission: {
+              select: {
+                permission: {
+                  select: {
+                    name: true,
                   },
                 },
               },
             },
-          })
-        )?.role_permissions.map((rp) => rp.permissions.name),
-      },
+          },
+        })
+      )?.rolePermission.map((rp) => {
+        const [scope, action] = rp.permission.name.split(':');
+        return {
+          scope: scope,
+          action: action,
+        };
+      }) ?? [],
       { excludeExtraneousValues: true },
     );
   }

@@ -17,12 +17,12 @@ export class CreateMemberDto {
   @ApiProperty()
   @Expose()
   @Length(2, 25)
-  first_name!: string;
+  firstName!: string;
 
   @ApiProperty()
   @Expose()
   @Length(2, 25)
-  last_name!: string;
+  lastName!: string;
 
   @ApiProperty()
   @Expose()

@@ -31,10 +31,10 @@ import { GetTaskGroupDto } from './dto/get-task-group.dto';
 import { UpdateTaskGroupDto } from './dto/update-task-group.dto';
 import { TaskGroupService } from './task-group.service';
 
-@Controller('task-groups')
-@UseGuards(AuthGuard)
+@Controller('taskGroups')
+@UseGuards(AuthGuard, TaskGroupGuard)
 export class TaskGroupController {
-  constructor(private readonly task_groupService: TaskGroupService) {}
+  constructor(private readonly taskGroupService: TaskGroupService) {}
 
   @UseInterceptors(AnalyticsInterceptor)
   @Get()
@@ -54,11 +54,11 @@ export class TaskGroupController {
   }> {
     const def_page: number = 1;
     const def_limit: number = 10;
-    const result = await this.task_groupService.getTaskGroups(
-      page ?? def_page,
-      limit ?? def_limit,
+    const result = await this.taskGroupService.getTaskGroups(
+      (page ?? def_page > 0) ? (page ?? def_page) : def_page,
+      (limit ?? def_limit > 0) ? (limit ?? def_limit) : def_limit,
     );
-    const count = await this.task_groupService.getTaskGroupCount();
+    const count = await this.taskGroupService.getTaskGroupCount();
 
     return {
       data: plainToInstance(GetTaskGroupDto, result, {
@@ -81,7 +81,7 @@ export class TaskGroupController {
   async getTaskGroup(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<{ data: GetTaskGroupDto }> {
-    const result = await this.task_groupService.getTaskGroup(id);
+    const result = await this.taskGroupService.getTaskGroup(id);
 
     if (result) return { data: result };
 
@@ -92,44 +92,36 @@ export class TaskGroupController {
   @Put(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'TaskGroup updated.' })
-  @ApiNotFoundResponse({ description: 'TaskGroup not found.' })
   async updateTaskGroup(
     @Param('id', ParseIntPipe) id: number,
     @Body() data: UpdateTaskGroupDto,
   ): Promise<{ data: GetTaskGroupDto }> {
-    const result = await this.task_groupService.updateTaskGroup(id, data);
-
-    if (result) return { data: result };
-
-    throw new NotFoundException();
+    return { data: await this.taskGroupService.updateTaskGroup(id, data) };
   }
 
   @UseInterceptors(AnalyticsInterceptor)
-  @Put(':id/:project_id')
+  @Put(':id/:projectId')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'TaskGroup updated.' })
-  @ApiNotFoundResponse({ description: 'TaskGroup not found.' })
   async relinkTaskGroup(
     @Param('id', ParseIntPipe) id: number,
-    @Param('project_id', ParseIntPipe) project_id: number,
+    @Param('projectId', ParseIntPipe) projectId: number,
   ): Promise<{ data: GetTaskGroupDto }> {
-    const result = await this.task_groupService.relinkTaskGroup(id, project_id);
-
-    if (result) return { data: result };
-
-    throw new NotFoundException();
+    return {
+      data: await this.taskGroupService.relinkTaskGroup(id, projectId),
+    };
   }
 
   @UseInterceptors(AnalyticsInterceptor)
-  @Post(':project_id')
+  @Post(':projectId')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'TaskGroup created.' })
   async createTaskGroup(
     @Body() data: CreateTaskGroupDto,
-    @Param('project_id', ParseIntPipe) project_id: number,
+    @Param('projectId', ParseIntPipe) projectId: number,
   ): Promise<{ data: GetTaskGroupDto | null }> {
     return {
-      data: await this.task_groupService.createTaskGroup(data, project_id),
+      data: await this.taskGroupService.createTaskGroup(data, projectId),
     };
   }
 
@@ -140,10 +132,6 @@ export class TaskGroupController {
   async deleteTaskGroup(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<{ data: GetTaskGroupDto }> {
-    const result = await this.task_groupService.deleteTaskGroup(id);
-
-    if (result) return { data: result };
-
-    throw new NotFoundException();
+    return { data: await this.taskGroupService.deleteTaskGroup(id) };
   }
 }

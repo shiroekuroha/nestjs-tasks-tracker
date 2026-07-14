@@ -2,8 +2,12 @@ import { Expose } from 'class-transformer';
 
 import { ApiProperty } from '@nestjs/swagger';
 
-export class GetRolePermissionsDto {
+export class GetPermissionDto {
   @ApiProperty()
   @Expose()
-  permissions!: string[];
+  scope!: string;
+
+  @ApiProperty()
+  @Expose()
+  action!: string;
 }

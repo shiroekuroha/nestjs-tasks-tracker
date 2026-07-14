@@ -20,7 +20,6 @@ import {
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
-  ApiProperty,
 } from '@nestjs/swagger';
 
 import { AnalyticsInterceptor } from '../analytics/analytics.interceptor';
@@ -30,14 +29,6 @@ import { CreateMemberDto } from './dto/create-member.dto';
 import { GetMemberDto } from './dto/get-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { MemberService } from './member.service';
-
-export class DefaultReturnResponse {
-  @ApiProperty()
-  data!: GetMemberDto | GetMemberDto[];
-
-  @ApiProperty()
-  meta?: any | null;
-}
 
 @Controller('members')
 @UseGuards(AuthGuard)
@@ -65,8 +56,8 @@ export class MemberController {
     const def_page: number = 1;
     const def_limit: number = 10;
     const result = await this.memberService.getMembers(
-      page ?? def_page,
-      limit ?? def_limit,
+      (page ?? def_page > 0) ? (page ?? def_page) : def_page,
+      (limit ?? def_limit > 0) ? (limit ?? def_limit) : def_limit,
     );
     const count = await this.memberService.getMemberCount();
 
@@ -126,35 +117,24 @@ export class MemberController {
   @Put('id/:id')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'Member updated.' })
-  @ApiNotFoundResponse({ description: 'Member not found.' })
   async updateMemberById(
     @Param('id', ParseIntPipe) id: number,
     @Body() data: UpdateMemberDto,
   ): Promise<{ data: GetMemberDto }> {
-    const result = await this.memberService.updateMemberById(id, data);
-
-    if (result) return { data: result };
-
-    throw new NotFoundException();
+    return { data: await this.memberService.updateMemberById(id, data) };
   }
 
   @UseInterceptors(AnalyticsInterceptor)
   @Put('username/:username')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'Member updated.' })
-  @ApiNotFoundResponse({ description: 'Member not found.' })
   async updateMemberByUsername(
     @Param('username') username: string,
     @Body() data: UpdateMemberDto,
   ): Promise<{ data: GetMemberDto }> {
-    const result = await this.memberService.updateMemberByUsername(
-      username,
-      data,
-    );
-
-    if (result) return { data: result };
-
-    throw new NotFoundException();
+    return {
+      data: await this.memberService.updateMemberByUsername(username, data),
+    };
   }
 
   @UseInterceptors(AnalyticsInterceptor)
@@ -171,29 +151,19 @@ export class MemberController {
   @Delete('id/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse({ description: 'Member deleted.' })
-  @ApiNotFoundResponse({ description: 'Member not found.' })
   async deleteMemberById(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<{ data: GetMemberDto }> {
-    const result = await this.memberService.deleteMemberById(id);
-
-    if (result) return { data: result };
-
-    throw new NotFoundException();
+    return { data: await this.memberService.deleteMemberById(id) };
   }
 
   @UseInterceptors(AnalyticsInterceptor)
   @Delete('username/:username')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse({ description: 'Member deleted.' })
-  @ApiNotFoundResponse({ description: 'Member not found.' })
   async deleteMemberByUsername(
     @Param('username') username: string,
   ): Promise<{ data: GetMemberDto }> {
-    const result = await this.memberService.deleteMemberByUsername(username);
-
-    if (result) return { data: result };
-
-    throw new NotFoundException();
+    return { data: await this.memberService.deleteMemberByUsername(username) };
   }
 }

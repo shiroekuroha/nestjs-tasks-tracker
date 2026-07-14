@@ -30,13 +30,13 @@ import { CreateAttachmentDto } from './dto/create-attachment.dto';
 import { CreateCheckListDto } from './dto/create-checklist.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { GetAttachmentDto } from './dto/get-attachment.dto';
-import { GetCheckListDto } from './dto/get-checklist.dto';
+import { GetChecklistDto } from './dto/get-checklist.dto';
 import { GetTaskDto } from './dto/get-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TaskService } from './task.service';
 
 @Controller('tasks')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, TaskGuard)
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
@@ -59,8 +59,8 @@ export class TaskController {
     const def_page: number = 1;
     const def_limit: number = 10;
     const result = await this.taskService.getTasks(
-      page ?? def_page,
-      limit ?? def_limit,
+      (page ?? def_page > 0) ? (page ?? def_page) : def_page,
+      (limit ?? def_limit > 0) ? (limit ?? def_limit) : def_limit,
     );
     const count = await this.taskService.getTaskCount();
 
@@ -101,44 +101,31 @@ export class TaskController {
     @Param('id', ParseIntPipe) id: number,
     @Body() data: UpdateTaskDto,
   ): Promise<{ data: GetTaskDto }> {
-    console.log(id);
-    console.log(data);
-
-    const result = await this.taskService.updateTask(id, data);
-
-    console.log(result);
-
-    if (result) return { data: result };
-
-    throw new NotFoundException();
+    return { data: await this.taskService.updateTask(id, data) };
   }
 
   @UseInterceptors(AnalyticsInterceptor)
-  @Put(':id/:task_group_id')
+  @Put(':id/:taskGroupId')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'Task updated.' })
   @ApiNotFoundResponse({ description: 'Task not found.' })
   async relinkTask(
     @Param('id', ParseIntPipe) id: number,
-    @Param('task_group_id', ParseIntPipe) task_group_id: number,
+    @Param('taskGroupId', ParseIntPipe) taskGroupId: number,
   ): Promise<{ data: GetTaskDto }> {
-    const result = await this.taskService.relinkTask(id, task_group_id);
-
-    if (result) return { data: result };
-
-    throw new NotFoundException();
+    return { data: await this.taskService.relinkTask(id, taskGroupId) };
   }
 
   @UseInterceptors(AnalyticsInterceptor)
-  @Post(':task_group_id')
+  @Post(':taskGroupId')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'Task created.' })
   async createTask(
     @Body() data: CreateTaskDto,
-    @Param('task_group_id', ParseIntPipe) task_group_id: number,
+    @Param('taskGroupId', ParseIntPipe) taskGroupId: number,
   ): Promise<{ data: GetTaskDto | null }> {
     return {
-      data: await this.taskService.createTask(data, task_group_id),
+      data: await this.taskService.createTask(data, taskGroupId),
     };
   }
 
@@ -149,14 +136,7 @@ export class TaskController {
   async deleteTask(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<{ data: GetTaskDto }> {
-    const result = await this.taskService.deleteTask(id);
-
-    if (result)
-      return {
-        data: result,
-      };
-
-    throw new NotFoundException();
+    return { data: await this.taskService.deleteTask(id) };
   }
 
   @UseInterceptors(AnalyticsInterceptor)
@@ -167,14 +147,7 @@ export class TaskController {
     @Param('id', ParseIntPipe) id: number,
     @Body() data: CreateAttachmentDto,
   ): Promise<{ data: GetAttachmentDto }> {
-    const result = await this.taskService.addAttachment(id, data);
-
-    if (result)
-      return {
-        data: result,
-      };
-
-    throw new NotFoundException();
+    return { data: await this.taskService.addAttachment(id, data) };
   }
 
   @UseInterceptors(AnalyticsInterceptor)
@@ -184,14 +157,7 @@ export class TaskController {
   async removeAttachment(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<{ data: GetAttachmentDto }> {
-    const result = await this.taskService.removeAttachment(id);
-
-    if (result)
-      return {
-        data: result,
-      };
-
-    throw new NotFoundException();
+    return { data: await this.taskService.removeAttachment(id) };
   }
 
   @UseInterceptors(AnalyticsInterceptor)
@@ -201,15 +167,8 @@ export class TaskController {
   async addChecklist(
     @Param('id', ParseIntPipe) id: number,
     @Body() data: CreateCheckListDto,
-  ): Promise<{ data: GetCheckListDto }> {
-    const result = await this.taskService.addCheckList(id, data);
-
-    if (result)
-      return {
-        data: result,
-      };
-
-    throw new NotFoundException();
+  ): Promise<{ data: GetChecklistDto }> {
+    return { data: await this.taskService.addCheckList(id, data) };
   }
 
   @UseInterceptors(AnalyticsInterceptor)
@@ -218,14 +177,7 @@ export class TaskController {
   @ApiNoContentResponse({ description: 'Checklist deleted.' })
   async removeChecklist(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<{ data: GetCheckListDto }> {
-    const result = await this.taskService.removeCheckList(id);
-
-    if (result)
-      return {
-        data: result,
-      };
-
-    throw new NotFoundException();
+  ): Promise<{ data: GetChecklistDto }> {
+    return { data: await this.taskService.removeCheckList(id) };
   }
 }

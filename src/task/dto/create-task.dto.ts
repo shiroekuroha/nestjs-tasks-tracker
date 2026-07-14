@@ -3,7 +3,7 @@ import { IsDate, IsInt, Length, MinLength } from 'class-validator';
 
 import { ApiProperty } from '@nestjs/swagger';
 
-import { status_types } from '../../generated/prisma/enums';
+import { StatusType } from '../../generated/prisma/enums';
 
 export class CreateTaskDto {
   @ApiProperty()
@@ -22,15 +22,15 @@ export class CreateTaskDto {
 
   @ApiProperty()
   @Expose()
-  status!: status_types;
+  status!: StatusType;
 
   @ApiProperty()
   @Expose()
   @IsDate()
-  start_date!: Date;
+  startDate!: Date;
 
   @ApiProperty()
   @Expose()
   @IsDate()
-  due_date!: Date;
+  dueDate!: Date;
 }

@@ -2,7 +2,7 @@ import { Expose } from 'class-transformer';
 
 import { ApiProperty } from '@nestjs/swagger';
 
-export class GetCheckListDto {
+export class GetChecklistDto {
   @ApiProperty()
   @Expose()
   id!: number;
@@ -21,5 +21,5 @@ export class GetCheckListDto {
 
   @ApiProperty()
   @Expose()
-  task_id!: number;
+  taskId!: number;
 }

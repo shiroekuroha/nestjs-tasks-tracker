@@ -1,13 +1,18 @@
 import { plainToInstance } from 'class-transformer';
 
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 
+import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAttachmentDto } from './dto/create-attachment.dto';
 import { CreateCheckListDto } from './dto/create-checklist.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { GetAttachmentDto } from './dto/get-attachment.dto';
-import { GetCheckListDto } from './dto/get-checklist.dto';
+import { GetChecklistDto } from './dto/get-checklist.dto';
 import { GetTaskDto } from './dto/get-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 
@@ -18,7 +23,7 @@ export class TaskService {
   async getTasks(page: number, limit: number): Promise<GetTaskDto[]> {
     return plainToInstance(
       GetTaskDto,
-      await this.prisma.tasks.findMany({
+      await this.prisma.task.findMany({
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -29,27 +34,24 @@ export class TaskService {
   }
 
   async getTaskCount(): Promise<number> {
-    return await this.prisma.tasks.count();
+    return await this.prisma.task.count();
   }
 
   async getTask(id: number): Promise<GetTaskDto | null> {
     return plainToInstance(
       GetTaskDto,
-      await this.prisma.tasks.findUnique({ where: { id: id } }),
+      await this.prisma.task.findUnique({ where: { id: id } }),
       {
         excludeExtraneousValues: true,
       },
     );
   }
 
-  async updateTask(
-    id: number,
-    data: UpdateTaskDto,
-  ): Promise<GetTaskDto | null> {
+  async updateTask(id: number, data: UpdateTaskDto): Promise<GetTaskDto> {
     try {
       return plainToInstance(
         GetTaskDto,
-        await this.prisma.tasks.update({
+        await this.prisma.task.update({
           where: { id: id },
           data: { ...data },
         }),
@@ -57,135 +59,204 @@ export class TaskService {
           excludeExtraneousValues: true,
         },
       );
-    } catch {
-      return null;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new BadRequestException({
+          prismaVersion: error.clientVersion,
+          prismaCode: error.code,
+          prismaError: error.message,
+        });
+      } else {
+        console.log(error);
+        throw new InternalServerErrorException();
+      }
     }
   }
 
-  async relinkTask(
-    id: number,
-    task_group_id: number,
-  ): Promise<GetTaskDto | null> {
+  async relinkTask(id: number, taskGroupId: number): Promise<GetTaskDto> {
     try {
       return plainToInstance(
         GetTaskDto,
-        await this.prisma.tasks.update({
+        await this.prisma.task.update({
           where: { id: id },
-          data: { task_groups: { connect: { id: task_group_id } } },
+          data: { taskGroup: { connect: { id: taskGroupId } } },
         }),
         {
           excludeExtraneousValues: true,
         },
       );
-    } catch {
-      return null;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new BadRequestException({
+          prismaVersion: error.clientVersion,
+          prismaCode: error.code,
+          prismaError: error.message,
+        });
+      } else {
+        console.log(error);
+        throw new InternalServerErrorException();
+      }
     }
   }
 
   async createTask(
     data: CreateTaskDto,
-    task_group_id: number,
-  ): Promise<GetTaskDto | null> {
+    taskGroupId: number,
+  ): Promise<GetTaskDto> {
     try {
       return plainToInstance(
         GetTaskDto,
-        await this.prisma.tasks.create({
+        await this.prisma.task.create({
           data: {
             ...data,
-            created_at: new Date(),
-            updated_at: new Date(),
-            task_groups: { connect: { id: task_group_id } },
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            taskGroup: { connect: { id: taskGroupId } },
           },
         }),
         {
           excludeExtraneousValues: true,
         },
       );
-    } catch {
-      return null;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new BadRequestException({
+          prismaVersion: error.clientVersion,
+          prismaCode: error.code,
+          prismaError: error.message,
+        });
+      } else {
+        console.log(error);
+        throw new InternalServerErrorException();
+      }
     }
   }
 
-  async deleteTask(id: number): Promise<GetTaskDto | null> {
+  async deleteTask(id: number): Promise<GetTaskDto> {
     try {
       return plainToInstance(
         GetTaskDto,
-        await this.prisma.tasks.delete({ where: { id: id } }),
+        await this.prisma.task.delete({ where: { id: id } }),
         {
           excludeExtraneousValues: true,
         },
       );
-    } catch {
-      return null;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new BadRequestException({
+          prismaVersion: error.clientVersion,
+          prismaCode: error.code,
+          prismaError: error.message,
+        });
+      } else {
+        console.log(error);
+        throw new InternalServerErrorException();
+      }
     }
   }
 
   async addAttachment(
     tid: number,
     data: CreateAttachmentDto,
-  ): Promise<GetAttachmentDto | null> {
+  ): Promise<GetAttachmentDto> {
     try {
       return plainToInstance(
         GetAttachmentDto,
-        await this.prisma.attachments.create({
+        await this.prisma.attachment.create({
           data: {
             name: data.name,
             data: new Uint8Array(data.data),
-            tasks: { connect: { id: tid } },
+            task: { connect: { id: tid } },
           },
         }),
         { excludeExtraneousValues: true },
       );
-    } catch {
-      return null;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new BadRequestException({
+          prismaVersion: error.clientVersion,
+          prismaCode: error.code,
+          prismaError: error.message,
+        });
+      } else {
+        console.log(error);
+        throw new InternalServerErrorException();
+      }
     }
   }
 
-  async removeAttachment(id: number): Promise<GetAttachmentDto | null> {
+  async removeAttachment(id: number): Promise<GetAttachmentDto> {
     try {
       return plainToInstance(
         GetAttachmentDto,
-        await this.prisma.attachments.delete({
+        await this.prisma.attachment.delete({
           where: { id: id },
         }),
         { excludeExtraneousValues: true },
       );
-    } catch {
-      return null;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new BadRequestException({
+          prismaVersion: error.clientVersion,
+          prismaCode: error.code,
+          prismaError: error.message,
+        });
+      } else {
+        console.log(error);
+        throw new InternalServerErrorException();
+      }
     }
   }
 
   async addCheckList(
     tid: number,
     data: CreateCheckListDto,
-  ): Promise<GetCheckListDto | null> {
+  ): Promise<GetChecklistDto> {
     try {
       return plainToInstance(
-        GetCheckListDto,
-        await this.prisma.check_lists.create({
+        GetChecklistDto,
+        await this.prisma.checklist.create({
           data: {
             ...data,
-            tasks: { connect: { id: tid } },
+            task: { connect: { id: tid } },
           },
         }),
         { excludeExtraneousValues: true },
       );
-    } catch {
-      return null;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new BadRequestException({
+          prismaVersion: error.clientVersion,
+          prismaCode: error.code,
+          prismaError: error.message,
+        });
+      } else {
+        console.log(error);
+        throw new InternalServerErrorException();
+      }
     }
   }
 
-  async removeCheckList(id: number): Promise<GetCheckListDto | null> {
+  async removeCheckList(id: number): Promise<GetChecklistDto> {
     try {
       return plainToInstance(
-        GetCheckListDto,
-        await this.prisma.check_lists.delete({
+        GetChecklistDto,
+        await this.prisma.checklist.delete({
           where: { id: id },
         }),
         { excludeExtraneousValues: true },
       );
-    } catch {
-      return null;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new BadRequestException({
+          prismaVersion: error.clientVersion,
+          prismaCode: error.code,
+          prismaError: error.message,
+        });
+      } else {
+        console.log(error);
+        throw new InternalServerErrorException();
+      }
     }
   }
 }

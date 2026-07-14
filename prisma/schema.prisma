@@ -1,123 +1,129 @@
 generator client {
-  provider     = "prisma-client"
-  output       = "../src/generated/prisma"
-  moduleFormat = "cjs"
+    provider     = "prisma-client"
+    output       = "../src/generated/prisma"
+    moduleFormat = "cjs"
 }
 
 datasource db {
-  provider = "postgresql"
+    provider = "postgresql"
 }
 
-model attachments {
-  id      Int    @id @default(autoincrement())
-  name    String @db.VarChar(50)
-  data    Bytes
-  task_id Int
-  tasks   tasks  @relation(fields: [task_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "attachments_tasks_fk")
+model Member {
+    id             Int             @id @default(autoincrement())
+    username       String          @db.VarChar(50)
+    password       String          @db.VarChar(50)
+    active         Boolean         @default(true)
+    firstName      String          @db.VarChar(25)
+    lastName       String          @db.VarChar(25)
+    birthdate      DateTime        @db.Date
+    email          String          @db.VarChar(50)
+    phone          String?         @db.VarChar(18)
+    address        String?         @db.VarChar(100)
+    projectMembers ProjectMember[]
+    taskMembers    TaskMember[]
 }
 
-model check_lists {
-  id          Int     @id @default(autoincrement())
-  name        String  @db.VarChar(50)
-  description String
-  completed   Boolean
-  task_id     Int
-  tasks       tasks   @relation(fields: [task_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "check_lists_tasks_fk")
+model Project {
+    id            Int             @id @default(autoincrement())
+    name          String          @db.VarChar(50)
+    projectMember ProjectMember[]
+    taskGroup     TaskGroup[]
 }
 
-model members {
-  id              Int               @id @default(autoincrement())
-  username        String            @db.VarChar(50)
-  password        String            @db.VarChar(50)
-  active          Boolean
-  first_name      String            @db.VarChar(25)
-  last_name       String            @db.VarChar(25)
-  birthdate       DateTime          @db.Date
-  email           String            @db.VarChar(50)
-  phone           String?           @db.VarChar(15)
-  address         String?           @db.VarChar(100)
-  project_members project_members[]
-  task_members    task_members[]
+model TaskGroup {
+    id        Int     @id @default(autoincrement())
+    name      String  @db.VarChar(50)
+    color     String  @db.VarChar(9)
+    position  Int
+    projectId Int
+    task      Task[]
+    project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "TaskGroup_Project_fk")
+
+    @@unique([projectId, position])
+    @@unique([projectId, name])
 }
 
-model permissions {
-  id               Int                @id @default(autoincrement())
-  name             String             @unique @db.VarChar(50)
-  role_permissions role_permissions[]
+model Task {
+    id          Int          @id @default(autoincrement())
+    name        String       @db.VarChar(50)
+    description String
+    position    Int
+    status      StatusType
+    startDate   DateTime?    @db.Timestamp(6)
+    dueDate     DateTime?    @db.Timestamp(6)
+    createdAt   DateTime     @default(now()) @db.Timestamp(6)
+    updatedAt   DateTime     @default(now()) @updatedAt @db.Timestamp(6)
+    taskGroupId Int
+    attachment  Attachment[]
+    checklist   Checklist[]
+    taskGroup   TaskGroup    @relation(fields: [taskGroupId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "Task_TaskGroup_fk")
+    taskMember  TaskMember[]
+
+    @@unique([taskGroupId, name])
+    @@unique([taskGroupId, position])
 }
 
-model project_members {
-  project_id Int
-  member_id  Int
-  role_id    Int?
-  members    members  @relation(fields: [member_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  projects   projects @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  roles      roles?   @relation(fields: [role_id], references: [id], onUpdate: NoAction)
-
-  @@id([project_id, member_id])
+model Attachment {
+    id     Int    @id @default(autoincrement())
+    name   String @db.VarChar(50)
+    data   Bytes
+    taskId Int
+    task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "Attachment_Task_fk")
 }
 
-model projects {
-  id              Int               @id @default(autoincrement())
-  name            String            @db.VarChar(50)
-  project_members project_members[]
-  task_groups     task_groups[]
+model Checklist {
+    id          Int     @id @default(autoincrement())
+    name        String  @db.VarChar(50)
+    description String
+    completed   Boolean
+    taskId      Int
+    task        Task    @relation(fields: [taskId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "Checklist_Task_fk")
 }
 
-model role_permissions {
-  role_id       Int
-  permission_id Int
-  permissions   permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  roles         roles       @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model TaskMember {
+    taskId   Int
+    memberId Int
+    member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+    task     Task   @relation(fields: [taskId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@id([role_id, permission_id])
+    @@id([taskId, memberId])
 }
 
-model roles {
-  id               Int                @id @default(autoincrement())
-  name             String             @unique @db.VarChar(50)
-  project_members  project_members[]
-  role_permissions role_permissions[]
+model ProjectMember {
+    projectId Int
+    memberId  Int
+    roleId    Int?
+    member    Member  @relation(fields: [memberId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+    project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+    role      Role?   @relation(fields: [roleId], references: [id], onUpdate: NoAction)
+
+    @@id([projectId, memberId])
 }
 
-model task_groups {
-  id         Int      @id @default(autoincrement())
-  name       String   @db.VarChar(50)
-  color      String   @db.VarChar(9)
-  position   Int
-  project_id Int
-  projects   projects @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "task_groups_project_fk")
-  tasks      tasks[]
+model Role {
+    id             Int              @id @default(autoincrement())
+    name           String           @unique @db.VarChar(50)
+    projectMember  ProjectMember[]
+    rolePermission RolePermission[]
 }
 
-model task_members {
-  task_id   Int
-  member_id Int
-  members   members @relation(fields: [member_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  tasks     tasks   @relation(fields: [task_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@id([task_id, member_id])
+model Permission {
+    id             Int              @id @default(autoincrement())
+    name           String           @unique @db.VarChar(50)
+    rolePermission RolePermission[]
 }
 
-model tasks {
-  id            Int            @id @default(autoincrement())
-  name          String         @db.VarChar(50)
-  description   String
-  position      Int
-  status        status_types
-  start_date    DateTime?      @db.Timestamp(6)
-  due_date      DateTime?      @db.Timestamp(6)
-  created_at    DateTime       @default(now()) @db.Timestamp(6)
-  updated_at    DateTime       @default(now()) @db.Timestamp(6)
-  task_group_id Int
-  attachments   attachments[]
-  check_lists   check_lists[]
-  task_members  task_members[]
-  task_groups   task_groups    @relation(fields: [task_group_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tasks_task_groups_fk")
+model RolePermission {
+    roleId       Int
+    permissionId Int
+    permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+    role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+    @@id([roleId, permissionId])
 }
 
-enum status_types {
-  TODO
-  DOING
-  DONE
+enum StatusType {
+    TODO
+    DOING
+    DONE
 }

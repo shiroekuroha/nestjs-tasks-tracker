@@ -17,5 +17,5 @@ export class GetAttachmentDto {
 
   @ApiProperty()
   @Expose()
-  task_id!: number;
+  taskId!: number;
 }

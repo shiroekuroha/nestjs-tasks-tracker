@@ -1,10 +1,10 @@
-import { plainToInstance } from 'class-transformer';
+import { instanceToInstance, plainToInstance } from 'class-transformer';
 
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 import { PrismaService } from '../../prisma/prisma.service';
-import { GetProjectDto } from '../../project/dto/get-project.dto';
+import { GetPermissionDto } from '../../role/dto/get-permission.dto';
 
 @Injectable()
 export class TaskGroupGuard implements CanActivate {
@@ -16,27 +16,83 @@ export class TaskGroupGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const payload: { sub: number; username: string } = request['user'];
-    const res_type: string = 'task-groups';
-    const task_group_id: number = request.params['id'];
+
+    if (request.method === 'POST') {
+      try {
+        const projectId: number = Number(request.params['projectId']);
+
+        const result: GetPermissionDto[] = plainToInstance(
+          GetPermissionDto,
+          (
+            await this.prisma.project.findUnique({
+              where: { id: projectId },
+              include: {
+                projectMember: {
+                  where: {
+                    memberId: payload.sub,
+                  },
+                  include: {
+                    role: {
+                      include: {
+                        rolePermission: {
+                          include: {
+                            permission: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            })
+          )?.projectMember
+            .at(0)
+            ?.role?.rolePermission.map((permission) => {
+              const [scope, action] = permission.permission.name.split(':');
+              return { scope: scope, action: action };
+            }) ?? [],
+        );
+
+        if (
+          result?.find(
+            (permission) =>
+              permission.scope == 'taskGroups' &&
+              permission.action === 'create',
+          )
+        )
+          return true;
+
+        return false;
+      } catch (error) {
+        console.log(error);
+
+        return false;
+      }
+    }
+
+    const taskGroupId: number = Number(request.params['id']);
 
     try {
-      const result =
+      console.log('Trying to authorize task-group access');
+
+      const result: GetPermissionDto[] = plainToInstance(
+        GetPermissionDto,
         (
-          await this.prisma.task_groups.findUnique({
-            where: { id: task_group_id },
+          await this.prisma.taskGroup.findUnique({
+            where: { id: taskGroupId },
             include: {
-              projects: {
+              project: {
                 include: {
-                  project_members: {
+                  projectMember: {
                     where: {
-                      member_id: payload.sub,
+                      memberId: payload.sub,
                     },
                     include: {
-                      roles: {
+                      role: {
                         include: {
-                          role_permissions: {
+                          rolePermission: {
                             include: {
-                              permissions: true,
+                              permission: true,
                             },
                           },
                         },
@@ -47,39 +103,38 @@ export class TaskGroupGuard implements CanActivate {
               },
             },
           })
-        )?.projects.project_members
+        )?.project.projectMember
           .at(0)
-          ?.roles?.role_permissions.map(
-            (permission) => permission.permissions.name,
-          ) ?? [];
+          ?.role?.rolePermission.map((permission) => {
+            const [scope, action] = permission.permission.name.split(':');
+            return { scope: scope, action: action };
+          }) ?? [],
+      );
 
       switch (request.method) {
         case 'PUT':
-          result?.find((value) => {
-            const [res, act] = value.split(':');
-            if (res == res_type && act === 'update') return true;
+          if (
+            result?.find(
+              (permission) =>
+                permission.scope == 'taskGroups' &&
+                permission.action === 'update',
+            )
+          )
+            return true;
 
-            return false;
-          });
-          break;
-
-        case 'POST':
-          result?.find((value) => {
-            const [res, act] = value.split(':');
-            if (res == res_type && act === 'create') return true;
-
-            return false;
-          });
-          break;
+          return false;
 
         case 'DELETE':
-          result?.find((value) => {
-            const [res, act] = value.split(':');
-            if (res == res_type && act === 'delete') return true;
+          if (
+            result?.find(
+              (permission) =>
+                permission.scope == 'taskGroups' &&
+                permission.action === 'delete',
+            )
+          )
+            return true;
 
-            return false;
-          });
-          break;
+          return false;
 
         default:
           return true;

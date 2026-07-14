@@ -1,3 +1,5 @@
+import { plainToInstance } from 'class-transformer';
+
 import {
   CanActivate,
   ExecutionContext,
@@ -7,6 +9,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 
 import { PrismaService } from '../../prisma/prisma.service';
+import { GetPermissionDto } from '../../role/dto/get-permission.dto';
 
 @Injectable()
 export class ProjectMemberGuard implements CanActivate {
@@ -18,63 +21,58 @@ export class ProjectMemberGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const payload: { sub: number; username: string } = request['user'];
-    const project_id: number = request.params['id'];
+    const projectId: number = request.params['id'];
 
     try {
-      const member_permissions = (
-        await this.prisma.project_members.findFirst({
-          where: {
-            project_id: project_id,
-            member_id: payload.sub,
-          },
-          include: {
-            roles: {
-              include: {
-                role_permissions: {
-                  include: {
-                    permissions: true,
+      console.log('Trying to authorize project member access');
+
+      const memberPermissions: GetPermissionDto[] = plainToInstance(
+        GetPermissionDto,
+        (
+          await this.prisma.projectMember.findFirst({
+            where: {
+              projectId: projectId,
+              memberId: payload.sub,
+            },
+            include: {
+              role: {
+                include: {
+                  rolePermission: {
+                    include: {
+                      permission: true,
+                    },
                   },
                 },
               },
             },
-          },
-        })
-      )?.roles?.role_permissions.map((pm) => pm.permissions.name);
+          })
+        )?.role?.rolePermission.map((pm) => {
+          const [scope, action] = pm.permission.name.split(':');
+          return { scope: scope, action: action };
+        }) ?? [],
+        { excludeExtraneousValues: true },
+      );
 
       switch (request.method) {
-        case 'PUT':
-          if (
-            member_permissions?.find((value: string) => {
-              const [res, act] = value.split(':');
-              if (res === 'projects' && act === 'change_role') return true;
-            })
-          )
-            return false;
-          break;
-        case 'POST':
-          if (
-            member_permissions?.find((value: string) => {
-              const [res, act] = value.split(':');
-              if (res === 'projects' && act === 'add_member') return true;
-
-              return false;
-            })
-          )
-            return true;
-          break;
-        case 'DELETE':
-          if (
-            member_permissions?.find((value: string) => {
-              const [res, act] = value.split(':');
-              if (res === 'projects' && act === 'remove_member') return true;
-            })
-          )
-            return false;
+        case 'GET':
+          return true;
           break;
         default:
-          return true;
+          if (
+            memberPermissions?.find(
+              (permission: GetPermissionDto) =>
+                permission.scope === 'projects' &&
+                permission.action === 'member_management',
+            )
+          )
+            return true;
+
+          return false;
+          break;
       }
-    } catch {
+    } catch (error) {
+      console.log(error);
+
       return false;
     }
 

@@ -2,7 +2,7 @@ import { Expose } from 'class-transformer';
 
 import { ApiProperty } from '@nestjs/swagger';
 
-import { status_types } from '../../generated/prisma/enums';
+import { StatusType } from '../../generated/prisma/enums';
 
 export class GetTaskDto {
   @ApiProperty()
@@ -23,25 +23,25 @@ export class GetTaskDto {
 
   @ApiProperty()
   @Expose()
-  status!: status_types;
+  status!: StatusType;
 
   @ApiProperty()
   @Expose()
-  start_date!: Date;
+  startDate!: Date;
 
   @ApiProperty()
   @Expose()
-  due_date!: Date;
+  dueDate!: Date;
 
   @ApiProperty()
   @Expose()
-  created_at!: Date;
+  createdAt!: Date;
 
   @ApiProperty()
   @Expose()
-  updated_at!: Date;
+  updatedAt!: Date;
 
   @ApiProperty()
   @Expose()
-  task_group_id!: number;
+  taskGroupId!: number;
 }

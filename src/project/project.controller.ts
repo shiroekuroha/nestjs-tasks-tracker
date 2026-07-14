@@ -27,16 +27,15 @@ import { AnalyticsInterceptor } from '../analytics/analytics.interceptor';
 import { AuthGuard } from '../security/guards/auth.guard';
 import { ProjectMemberGuard } from '../security/guards/project-member.guard';
 import { ProjectGuard } from '../security/guards/project.guard';
-import { CreateTaskDto } from '../task/dto/create-task.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { GetProjectMemberDto } from './dto/get-project-member.dto';
-import { GetProjectMembersDto } from './dto/get-project-members.dto';
+import { GetProjectWholeDto } from './dto/get-project-whole.dto';
 import { GetProjectDto } from './dto/get-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { ProjectService } from './project.service';
 
 @Controller('projects')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, ProjectGuard)
 export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
@@ -61,8 +60,8 @@ export class ProjectController {
     const def_page: number = 1;
     const def_limit: number = 10;
     const result = await this.projectService.getProjects(
-      page ?? def_page,
-      limit ?? def_limit,
+      (page ?? def_page > 0) ? (page ?? def_page) : def_page,
+      (limit ?? def_limit > 0) ? (limit ?? def_limit) : def_limit,
     );
     const count = await this.projectService.getProjectCount();
 
@@ -111,30 +110,21 @@ export class ProjectController {
     @Param('id', ParseIntPipe) id: number,
     @Body() data: UpdateProjectDto,
   ): Promise<{ data: GetProjectDto }> {
-    const result = await this.projectService.updateProject(id, data);
-
-    if (result) return { data: result };
-
-    throw new NotFoundException();
+    return { data: await this.projectService.updateProject(id, data) };
   }
 
   @UseInterceptors(AnalyticsInterceptor)
-  @Post()
+  @Post(':memberId')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
     description: 'Project created.',
   })
   async createProject(
     @Body() data: CreateProjectDto,
+    @Param('memberId', ParseIntPipe) memberId: number,
   ): Promise<{ data: GetProjectDto }> {
     return {
-      data: plainToInstance(
-        GetProjectDto,
-        await this.projectService.createProject(data),
-        {
-          excludeExtraneousValues: true,
-        },
-      ),
+      data: await this.projectService.createProject(data, memberId),
     };
   }
 
@@ -144,34 +134,22 @@ export class ProjectController {
   @ApiNoContentResponse({
     description: 'Project deleted.',
   })
-  @ApiNotFoundResponse({
-    description: 'Project not found.',
-  })
   async deleteProject(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<{ data: GetProjectDto }> {
-    const result = await this.projectService.deleteProject(id);
-
-    if (result) return { data: result };
-
-    throw new NotFoundException();
+    return { data: await this.projectService.deleteProject(id) };
   }
 
   @UseInterceptors(AnalyticsInterceptor)
   @Get(':id/whole')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
-    description: 'Project deleted.',
-  })
-  @ApiNotFoundResponse({
-    description: 'Project not found.',
+    description: 'Project found.',
   })
   async getProjectWhole(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<{ data: any }> {
+  ): Promise<{ data: GetProjectWholeDto }> {
     const result = await this.projectService.getProjectWhole(id);
-
-    console.log(result);
 
     if (result) return { data: result };
 
@@ -189,64 +167,45 @@ export class ProjectController {
   @ApiOkResponse({
     description: 'Project members found.',
   })
-  @ApiNotFoundResponse({
-    description: 'Project members not found.',
-  })
   async getProjectMembers(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<{ data: GetProjectMembersDto }> {
-    const result = await this.projectService.getProjectMembers(id);
-
-    if (result) return { data: result };
-
-    throw new NotFoundException();
+  ): Promise<{ data: GetProjectMemberDto[] }> {
+    return { data: await this.projectService.getProjectMembers(id) };
   }
 
   @UseInterceptors(AnalyticsInterceptor)
-  @Post(':id/members/:mid')
+  @Post(':id/members/:memberId')
   @UseGuards(ProjectMemberGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
     description: 'Project member added.',
   })
-  @ApiNotFoundResponse({
-    description: 'Project/Member or role not found.',
-  })
   async addProjectMember(
     @Param('id', ParseIntPipe) pid: number,
-    @Param('mid', ParseIntPipe) mid: number,
-    @Query('rid', new ParseIntPipe({ optional: true })) role_id: number,
+    @Param('memberId', ParseIntPipe) mid: number,
+    @Query('roleId', new ParseIntPipe({ optional: true })) role_id: number,
   ): Promise<{ data: GetProjectMemberDto }> {
-    const result = await this.projectService.addProjectMember(
-      pid,
-      mid,
-      role_id ?? null,
-    );
-
-    if (result) return { data: result };
-
-    throw new NotFoundException();
+    return {
+      data: await this.projectService.addProjectMember(
+        pid,
+        mid,
+        role_id ?? null,
+      ),
+    };
   }
 
   @UseInterceptors(AnalyticsInterceptor)
-  @Delete(':id/members/:mid')
+  @Delete(':id/members/:memberId')
   @UseGuards(ProjectMemberGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse({
     description: 'Project member removed.',
   })
-  @ApiNotFoundResponse({
-    description: 'Project/Member not found.',
-  })
   async removeProjectMember(
     @Param('id', ParseIntPipe) pid: number,
-    @Param('mid', ParseIntPipe) mid: number,
+    @Param('memberId', ParseIntPipe) mid: number,
   ): Promise<{ data: GetProjectMemberDto }> {
-    const result = await this.projectService.removeProjectMember(pid, mid);
-
-    if (result) return { data: result };
-
-    throw new NotFoundException();
+    return { data: await this.projectService.removeProjectMember(pid, mid) };
   }
 
   @UseInterceptors(AnalyticsInterceptor)
@@ -256,22 +215,13 @@ export class ProjectController {
   @ApiOkResponse({
     description: 'Project members role changed.',
   })
-  @ApiNotFoundResponse({
-    description: 'Project/Member or role not found.',
-  })
   async changeProjectMemberRole(
     @Param('id', ParseIntPipe) pid: number,
     @Param('mid', ParseIntPipe) mid: number,
     @Param('rid', ParseIntPipe) rid: number,
   ): Promise<{ data: GetProjectMemberDto }> {
-    const result = await this.projectService.changeProjectMemberRole(
-      pid,
-      mid,
-      rid,
-    );
-
-    if (result) return { data: result };
-
-    throw new NotFoundException();
+    return {
+      data: await this.projectService.changeProjectMemberRole(pid, mid, rid),
+    };
   }
 }

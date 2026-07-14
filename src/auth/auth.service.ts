@@ -19,7 +19,7 @@ export class AuthService {
     try {
       return plainToInstance(
         GetMemberDto,
-        await this.prisma.members.findUnique({
+        await this.prisma.member.findUnique({
           where: {
             id: (await this.jwtService.verifyAsync(access_token)).sub,
           },
@@ -35,7 +35,7 @@ export class AuthService {
     username: string,
     password: string,
   ): Promise<{ access_token: string }> {
-    const member = await this.prisma.members.findFirst({
+    const member = await this.prisma.member.findFirst({
       where: { username: username, password: password, active: true },
     });
 
@@ -47,6 +47,8 @@ export class AuthService {
 
       return { access_token: await this.jwtService.signAsync(payload) };
     }
+
+    console.log('Wrong username/password or account no longer active.');
 
     throw new UnauthorizedException();
   }

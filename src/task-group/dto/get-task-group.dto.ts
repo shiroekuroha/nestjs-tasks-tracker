@@ -22,5 +22,5 @@ export class GetTaskGroupDto {
 
   @ApiProperty()
   @Expose()
-  project_id!: number;
+  projectId!: number;
 }

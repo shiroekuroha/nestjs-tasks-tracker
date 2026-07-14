@@ -26,7 +26,7 @@ import {
 import { AnalyticsInterceptor } from '../analytics/analytics.interceptor';
 import { AuthGuard } from '../security/guards/auth.guard';
 import { CreateRoleDto } from './dto/create-role.dto';
-import { GetRolePermissionsDto } from './dto/get-role-permissions.dto';
+import { GetPermissionDto } from './dto/get-permission.dto';
 import { GetRoleDto } from './dto/get-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { RoleService } from './role.service';
@@ -55,8 +55,8 @@ export class RoleController {
     const def_page: number = 1;
     const def_limit: number = 10;
     const result = await this.roleService.getRoles(
-      page ?? def_page,
-      limit ?? def_limit,
+      (page ?? def_page > 0) ? (page ?? def_page) : def_page,
+      (limit ?? def_limit > 0) ? (limit ?? def_limit) : def_limit,
     );
     const count = await this.roleService.getRoleCount();
 
@@ -97,11 +97,7 @@ export class RoleController {
     @Param('id', ParseIntPipe) id: number,
     @Body() data: UpdateRoleDto,
   ): Promise<{ data: GetRoleDto }> {
-    const result = await this.roleService.updateRole(id, data);
-
-    if (result) return { data: result };
-
-    throw new NotFoundException();
+    return { data: await this.roleService.updateRole(id, data) };
   }
 
   @UseInterceptors(AnalyticsInterceptor)
@@ -119,25 +115,16 @@ export class RoleController {
   async deleteRole(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<{ data: GetRoleDto }> {
-    const result = await this.roleService.deleteRole(id);
-
-    if (result) return { data: result };
-
-    throw new NotFoundException();
+    return { data: await this.roleService.deleteRole(id) };
   }
 
   @UseInterceptors(AnalyticsInterceptor)
   @Get(':id/permissions')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'Role permissions found.' })
-  @ApiNotFoundResponse({ description: 'Role permissions not found.' })
   async getRolePermissions(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<{ data: GetRolePermissionsDto }> {
-    const result = await this.roleService.rolePermissions(id);
-
-    if (result) return { data: result };
-
-    throw new NotFoundException();
+  ): Promise<{ data: GetPermissionDto[] }> {
+    return { data: await this.roleService.rolePermissions(id) };
   }
 }

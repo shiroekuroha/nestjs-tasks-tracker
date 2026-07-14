@@ -1,16 +1,17 @@
 import { plainToInstance } from 'class-transformer';
 
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 
+import { Prisma } from '../generated/prisma/client';
 import { GetMemberDto } from '../member/dto/get-member.dto';
 import { PrismaService } from '../prisma/prisma.service';
-import { TaskGroupService } from '../task-group/task-group.service';
-import { CreateTaskDto } from '../task/dto/create-task.dto';
-import { GetTaskDto } from '../task/dto/get-task.dto';
-import { TaskService } from '../task/task.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { GetProjectMemberDto } from './dto/get-project-member.dto';
-import { GetProjectMembersDto } from './dto/get-project-members.dto';
+import { GetProjectWholeDto } from './dto/get-project-whole.dto';
 import { GetProjectDto } from './dto/get-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 
@@ -21,7 +22,7 @@ export class ProjectService {
   async getProjects(page: number, limit: number): Promise<GetProjectDto[]> {
     return plainToInstance(
       GetProjectDto,
-      await this.prisma.projects.findMany({
+      await this.prisma.project.findMany({
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -32,13 +33,13 @@ export class ProjectService {
   }
 
   async getProjectCount(): Promise<number> {
-    return await this.prisma.projects.count();
+    return await this.prisma.project.count();
   }
 
   async getProject(id: number): Promise<GetProjectDto | null> {
     return plainToInstance(
       GetProjectDto,
-      await this.prisma.projects.findUnique({ where: { id: id } }),
+      await this.prisma.project.findUnique({ where: { id: id } }),
       { excludeExtraneousValues: true },
     );
   }
@@ -46,112 +47,159 @@ export class ProjectService {
   async updateProject(
     id: number,
     data: UpdateProjectDto,
-  ): Promise<GetProjectDto | null> {
+  ): Promise<GetProjectDto> {
     try {
       return plainToInstance(
         GetProjectDto,
-        await this.prisma.projects.update({ where: { id: id }, data }),
+        await this.prisma.project.update({ where: { id: id }, data }),
         { excludeExtraneousValues: true },
       );
-    } catch {
-      return null;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new BadRequestException({
+          prismaVersion: error.clientVersion,
+          prismaCode: error.code,
+          prismaError: error.message,
+        });
+      } else {
+        console.log(error);
+        throw new InternalServerErrorException();
+      }
     }
   }
 
-  async createProject(data: CreateProjectDto): Promise<GetProjectDto> {
-    return plainToInstance(
-      GetProjectDto,
-      await this.prisma.projects.create({ data: { ...data } }),
-      { excludeExtraneousValues: true },
-    );
-  }
-
-  async deleteProject(id: number): Promise<GetProjectDto | null> {
+  async createProject(
+    data: CreateProjectDto,
+    memberId: number,
+  ): Promise<GetProjectDto> {
     try {
       return plainToInstance(
         GetProjectDto,
-        await this.prisma.projects.delete({ where: { id: id } }),
-        { excludeExtraneousValues: true },
-      );
-    } catch {
-      return null;
-    }
-  }
-
-  async getProjectWhole(id: number): Promise<any | null> {
-    return await this.prisma.projects.findUnique({
-      where: { id: id },
-      include: {
-        project_members: {
-          include: {
-            members: {
-              select: {
-                id: true,
-                username: true,
-                first_name: true,
-                last_name: true,
-                birthdate: true,
-                email: true,
-                phone: true,
-                address: true,
+        await this.prisma.project.create({
+          data: {
+            ...data,
+            projectMember: {
+              create: {
+                memberId: memberId,
+                roleId: 1,
               },
             },
           },
-        },
-        task_groups: {
-          include: {
-            tasks: {
-              include: {
-                task_members: {
-                  include: {
-                    members: {
-                      select: {
-                        id: true,
-                        username: true,
-                        first_name: true,
-                        last_name: true,
-                        birthdate: true,
-                        email: true,
-                        phone: true,
-                        address: true,
+        }),
+        { excludeExtraneousValues: true },
+      );
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new BadRequestException({
+          prismaVersion: error.clientVersion,
+          prismaCode: error.code,
+          prismaError: error.message,
+        });
+      } else {
+        console.log(error);
+        throw new InternalServerErrorException();
+      }
+    }
+  }
+
+  async deleteProject(id: number): Promise<GetProjectDto> {
+    try {
+      return plainToInstance(
+        GetProjectDto,
+        await this.prisma.project.delete({ where: { id: id } }),
+        { excludeExtraneousValues: true },
+      );
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new BadRequestException({
+          prismaVersion: error.clientVersion,
+          prismaCode: error.code,
+          prismaError: error.message,
+        });
+      } else {
+        console.log(error);
+        throw new InternalServerErrorException();
+      }
+    }
+  }
+
+  async getProjectWhole(id: number): Promise<GetProjectWholeDto | null> {
+    return plainToInstance(
+      GetProjectWholeDto,
+      await this.prisma.project.findUnique({
+        where: { id: id },
+        include: {
+          projectMember: {
+            include: {
+              member: {
+                select: {
+                  id: true,
+                  username: true,
+                  firstName: true,
+                  lastName: true,
+                  birthdate: true,
+                  email: true,
+                  phone: true,
+                  address: true,
+                },
+              },
+            },
+          },
+          taskGroup: {
+            include: {
+              task: {
+                include: {
+                  taskMember: {
+                    include: {
+                      member: {
+                        select: {
+                          id: true,
+                          username: true,
+                          firstName: true,
+                          lastName: true,
+                          birthdate: true,
+                          email: true,
+                          phone: true,
+                          address: true,
+                        },
                       },
                     },
                   },
+                  attachment: true,
+                  checklist: true,
                 },
-                attachments: true,
-                check_lists: true,
               },
             },
           },
         },
+      }),
+      {
+        excludeExtraneousValues: true,
       },
-    });
+    );
   }
 
-  async getProjectMembers(id: number): Promise<GetProjectMembersDto | null> {
+  async getProjectMembers(id: number): Promise<GetProjectMemberDto[]> {
     return plainToInstance(
-      GetProjectMembersDto,
-      {
-        project_members:
-          (
-            await this.prisma.projects.findUnique({
-              where: {
-                id: id,
-              },
+      GetProjectMemberDto,
+      (
+        await this.prisma.project.findUnique({
+          where: {
+            id: id,
+          },
+          include: {
+            projectMember: {
               include: {
-                project_members: {
-                  include: {
-                    members: true,
-                  },
-                },
+                member: true,
               },
-            })
-          )?.project_members.map((member) =>
-            plainToInstance(GetMemberDto, member.members, {
-              excludeExtraneousValues: true,
-            }),
-          ) ?? [],
-      },
+            },
+          },
+        })
+      )?.projectMember.map((member) =>
+        plainToInstance(GetMemberDto, member.member, {
+          excludeExtraneousValues: true,
+        }),
+      ) ?? [],
       { excludeExtraneousValues: true },
     );
   }
@@ -159,44 +207,62 @@ export class ProjectService {
   async addProjectMember(
     pid: number,
     mid: number,
-    role_id: number | null = null,
-  ): Promise<GetProjectMemberDto | null> {
+    roleId: number | null = null,
+  ): Promise<GetProjectMemberDto> {
     try {
       return plainToInstance(
         GetProjectMemberDto,
-        await this.prisma.project_members.create({
+        await this.prisma.projectMember.create({
           data: {
-            project_id: pid,
-            member_id: mid,
-            role_id: role_id,
+            projectId: pid,
+            memberId: mid,
+            roleId: roleId,
           },
         }),
         { excludeExtraneousValues: true },
       );
-    } catch {
-      return null;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new BadRequestException({
+          prismaVersion: error.clientVersion,
+          prismaCode: error.code,
+          prismaError: error.message,
+        });
+      } else {
+        console.log(error);
+        throw new InternalServerErrorException();
+      }
     }
   }
 
   async removeProjectMember(
     pid: number,
     mid: number,
-  ): Promise<GetProjectMemberDto | null> {
+  ): Promise<GetProjectMemberDto> {
     try {
       return plainToInstance(
         GetProjectMemberDto,
-        await this.prisma.project_members.delete({
+        await this.prisma.projectMember.delete({
           where: {
-            project_id_member_id: {
-              project_id: pid,
-              member_id: mid,
+            projectId_memberId: {
+              projectId: pid,
+              memberId: mid,
             },
           },
         }),
         { excludeExtraneousValues: true },
       );
-    } catch {
-      return null;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new BadRequestException({
+          prismaVersion: error.clientVersion,
+          prismaCode: error.code,
+          prismaError: error.message,
+        });
+      } else {
+        console.log(error);
+        throw new InternalServerErrorException();
+      }
     }
   }
 
@@ -204,25 +270,34 @@ export class ProjectService {
     pid: number,
     mid: number,
     rid: number,
-  ): Promise<GetProjectMemberDto | null> {
+  ): Promise<GetProjectMemberDto> {
     try {
       return plainToInstance(
         GetProjectMemberDto,
-        await this.prisma.project_members.update({
+        await this.prisma.projectMember.update({
           where: {
-            project_id_member_id: {
-              project_id: pid,
-              member_id: mid,
+            projectId_memberId: {
+              projectId: pid,
+              memberId: mid,
             },
           },
           data: {
-            role_id: rid,
+            roleId: rid,
           },
         }),
         { excludeExtraneousValues: true },
       );
-    } catch {
-      return null;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new BadRequestException({
+          prismaVersion: error.clientVersion,
+          prismaCode: error.code,
+          prismaError: error.message,
+        });
+      } else {
+        console.log(error);
+        throw new InternalServerErrorException();
+      }
     }
   }
 }

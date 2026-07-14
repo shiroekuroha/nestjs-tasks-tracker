@@ -6,18 +6,18 @@ export class GetMemberDto {
   @ApiProperty()
   @Expose()
   id!: number;
-    
+
   @ApiProperty()
   @Expose()
   username!: string;
 
   @ApiProperty()
   @Expose()
-  first_name!: string;
+  firstName!: string;
 
   @ApiProperty()
   @Expose()
-  last_name!: string;
+  lastName!: string;
 
   @ApiProperty()
   @Expose()

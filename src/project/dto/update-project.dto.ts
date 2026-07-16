@@ -6,6 +6,6 @@ import { ApiProperty } from '@nestjs/swagger';
 export class UpdateProjectDto {
   @ApiProperty()
   @Expose()
-  @Length(4, 50)
+  @Length(1, 50)
   name?: string;
 }

@@ -5,7 +5,6 @@ import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 import { PrismaService } from '../../prisma/prisma.service';
-import { GetProjectDto } from '../../project/dto/get-project.dto';
 import { GetPermissionDto } from '../../role/dto/get-permission.dto';
 
 @Injectable()

@@ -19,7 +19,6 @@ export class ProjectGuard implements CanActivate {
     const projectId: number = Number(request.params['id']);
 
     try {
-      console.log('Trying to authorize project access');
       if (request.method == 'POST') return true;
 
       const memberPermissions: GetPermissionDto[] = plainToInstance(

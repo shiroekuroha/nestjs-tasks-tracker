@@ -13,7 +13,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async verify(access_token: string | null): Promise<GetMemberDto> {
+  async verify(access_token: string): Promise<GetMemberDto> {
     if (!access_token) throw new UnauthorizedException();
 
     try {
@@ -48,8 +48,10 @@ export class AuthService {
       return { access_token: await this.jwtService.signAsync(payload) };
     }
 
-    console.log('Wrong username/password or account no longer active.');
-
-    throw new UnauthorizedException();
+    throw new UnauthorizedException({
+      message: 'Unauthorized',
+      reason: 'Wrong username/password or account no longer active.',
+      statusCode: 401,
+    });
   }
 }

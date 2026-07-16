@@ -13,7 +13,6 @@ import {
   Put,
   Query,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiCreatedResponse,
@@ -22,7 +21,6 @@ import {
   ApiOkResponse,
 } from '@nestjs/swagger';
 
-import { AnalyticsInterceptor } from '../analytics/analytics.interceptor';
 import { GetProjectDto } from '../project/dto/get-project.dto';
 import { AuthGuard } from '../security/guards/auth.guard';
 import { CreateMemberDto } from './dto/create-member.dto';
@@ -35,7 +33,6 @@ import { MemberService } from './member.service';
 export class MemberController {
   constructor(private readonly memberService: MemberService) {}
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
@@ -72,98 +69,86 @@ export class MemberController {
     };
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Get('id/:id/projects')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'Member found.' })
   @ApiNotFoundResponse({ description: 'Member not found.' })
   async getMemberProjects(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<{ data: GetProjectDto[] }> {
-    return { data: await this.memberService.getMemberProjects(id) };
+  ): Promise<GetProjectDto[]> {
+    return await this.memberService.getMemberProjects(id);
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Get('id/:id')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'Member found.' })
   @ApiNotFoundResponse({ description: 'Member not found.' })
   async getMemberById(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<{ data: GetMemberDto }> {
+  ): Promise<GetMemberDto> {
     const result = await this.memberService.getMemberById(id);
 
-    if (result) return { data: result };
+    if (result) return result;
 
     throw new NotFoundException();
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Get('username/:username')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'Member found.' })
   @ApiNotFoundResponse({ description: 'Member not found.' })
   async getMemberByUsername(
     @Param('username') username: string,
-  ): Promise<{ data: GetMemberDto }> {
+  ): Promise<GetMemberDto> {
     const result = await this.memberService.getMemberByUsername(username);
 
-    if (result) return { data: result };
+    if (result) return result;
 
     throw new NotFoundException();
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Put('id/:id')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'Member updated.' })
   async updateMemberById(
     @Param('id', ParseIntPipe) id: number,
     @Body() data: UpdateMemberDto,
-  ): Promise<{ data: GetMemberDto }> {
-    return { data: await this.memberService.updateMemberById(id, data) };
+  ): Promise<GetMemberDto> {
+    return await this.memberService.updateMemberById(id, data);
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Put('username/:username')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'Member updated.' })
   async updateMemberByUsername(
     @Param('username') username: string,
     @Body() data: UpdateMemberDto,
-  ): Promise<{ data: GetMemberDto }> {
-    return {
-      data: await this.memberService.updateMemberByUsername(username, data),
-    };
+  ): Promise<GetMemberDto> {
+    return await this.memberService.updateMemberByUsername(username, data);
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiCreatedResponse({ description: 'Member created.' })
-  async createMember(
-    @Body() data: CreateMemberDto,
-  ): Promise<{ data: GetMemberDto }> {
-    return { data: await this.memberService.createMember(data) };
+  async createMember(@Body() data: CreateMemberDto): Promise<GetMemberDto> {
+    return await this.memberService.createMember(data);
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Delete('id/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse({ description: 'Member deleted.' })
   async deleteMemberById(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<{ data: GetMemberDto }> {
-    return { data: await this.memberService.deleteMemberById(id) };
+  ): Promise<GetMemberDto> {
+    return await this.memberService.deleteMemberById(id);
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Delete('username/:username')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse({ description: 'Member deleted.' })
   async deleteMemberByUsername(
     @Param('username') username: string,
-  ): Promise<{ data: GetMemberDto }> {
-    return { data: await this.memberService.deleteMemberByUsername(username) };
+  ): Promise<GetMemberDto> {
+    return await this.memberService.deleteMemberByUsername(username);
   }
 }

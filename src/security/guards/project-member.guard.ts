@@ -24,8 +24,6 @@ export class ProjectMemberGuard implements CanActivate {
     const projectId: number = request.params['id'];
 
     try {
-      console.log('Trying to authorize project member access');
-
       const memberPermissions: GetPermissionDto[] = plainToInstance(
         GetPermissionDto,
         (

@@ -15,7 +15,6 @@ import {
   Put,
   Query,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiNoContentResponse,
@@ -23,7 +22,6 @@ import {
   ApiOkResponse,
 } from '@nestjs/swagger';
 
-import { AnalyticsInterceptor } from '../analytics/analytics.interceptor';
 import { AuthGuard } from '../security/guards/auth.guard';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { GetPermissionDto } from './dto/get-permission.dto';
@@ -36,7 +34,6 @@ import { RoleService } from './role.service';
 export class RoleController {
   constructor(private readonly roleService: RoleService) {}
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'Roles found.' })
@@ -73,22 +70,18 @@ export class RoleController {
     };
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'Role found.' })
   @ApiNotFoundResponse({ description: 'Role not found.' })
-  async getRole(
-    @Param('id', ParseIntPipe) id: number,
-  ): Promise<{ data: GetRoleDto }> {
+  async getRole(@Param('id', ParseIntPipe) id: number): Promise<GetRoleDto> {
     const result = await this.roleService.getRole(id);
 
-    if (result) return { data: result };
+    if (result) return result;
 
     throw new NotFoundException();
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Put(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'Role updated.' })
@@ -96,35 +89,30 @@ export class RoleController {
   async updateRole(
     @Param('id', ParseIntPipe) id: number,
     @Body() data: UpdateRoleDto,
-  ): Promise<{ data: GetRoleDto }> {
-    return { data: await this.roleService.updateRole(id, data) };
+  ): Promise<GetRoleDto> {
+    return await this.roleService.updateRole(id, data);
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Post()
-  @HttpCode(HttpStatus.OK)
+  @HttpCode(HttpStatus.CREATED)
   @ApiOkResponse({ description: 'Role created.' })
-  async createRole(@Body() data: CreateRoleDto): Promise<{ data: GetRoleDto }> {
-    return { data: await this.roleService.createRole(data) };
+  async createRole(@Body() data: CreateRoleDto): Promise<GetRoleDto> {
+    return await this.roleService.createRole(data);
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse({ description: 'Role deleted.' })
-  async deleteRole(
-    @Param('id', ParseIntPipe) id: number,
-  ): Promise<{ data: GetRoleDto }> {
-    return { data: await this.roleService.deleteRole(id) };
+  async deleteRole(@Param('id', ParseIntPipe) id: number): Promise<GetRoleDto> {
+    return await this.roleService.deleteRole(id);
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Get(':id/permissions')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'Role permissions found.' })
   async getRolePermissions(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<{ data: GetPermissionDto[] }> {
-    return { data: await this.roleService.rolePermissions(id) };
+  ): Promise<GetPermissionDto[]> {
+    return await this.roleService.rolePermissions(id);
   }
 }

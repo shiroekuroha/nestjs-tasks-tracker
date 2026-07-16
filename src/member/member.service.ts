@@ -4,7 +4,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
-  InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 
 import { Prisma } from '../generated/prisma/client';
@@ -85,148 +85,83 @@ export class MemberService {
     id: number,
     data: UpdateMemberDto,
   ): Promise<GetMemberDto> {
-    try {
-      return plainToInstance(
-        GetMemberDto,
-        await this.prisma.member.update({
-          where: { id: id, active: true },
-          data: {
-            ...data,
-          },
-        }),
-        {
-          excludeExtraneousValues: true,
+    return plainToInstance(
+      GetMemberDto,
+      await this.prisma.member.update({
+        where: { id: id, active: true },
+        data: {
+          ...data,
         },
-      );
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new BadRequestException({
-          prismaVersion: error.clientVersion,
-          prismaCode: error.code,
-          prismaError: error.message,
-        });
-      } else {
-        console.log(error);
-        throw new InternalServerErrorException();
-      }
-    }
+      }),
+      {
+        excludeExtraneousValues: true,
+      },
+    );
   }
 
   async updateMemberByUsername(
     username: string,
     data: UpdateMemberDto,
   ): Promise<GetMemberDto> {
-    try {
-      return plainToInstance(
-        GetMemberDto,
-        (
-          await this.prisma.member.updateManyAndReturn({
-            where: { username: username, active: true },
-            data: {
-              ...data,
-            },
-          })
-        ).at(0),
-        {
-          excludeExtraneousValues: true,
-        },
-      );
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new BadRequestException({
-          prismaVersion: error.clientVersion,
-          prismaCode: error.code,
-          prismaError: error.message,
-        });
-      } else {
-        console.log(error);
-        throw new InternalServerErrorException();
-      }
-    }
+    return plainToInstance(
+      GetMemberDto,
+      (
+        await this.prisma.member.updateManyAndReturn({
+          where: { username: username, active: true },
+          data: {
+            ...data,
+          },
+        })
+      ).at(0),
+      {
+        excludeExtraneousValues: true,
+      },
+    );
   }
 
   async createMember(data: CreateMemberDto): Promise<GetMemberDto> {
     if (await this.getMemberByUsername(data.username))
       throw new ForbiddenException('Forbidden', 'Member exists and is active.');
 
-    try {
-      return plainToInstance(
-        GetMemberDto,
-        await this.prisma.member.create({
-          data: {
-            ...data,
-            active: true,
-          },
-        }),
-        {
-          excludeExtraneousValues: true,
+    return plainToInstance(
+      GetMemberDto,
+      await this.prisma.member.create({
+        data: {
+          ...data,
+          active: true,
         },
-      );
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new BadRequestException({
-          prismaVersion: error.clientVersion,
-          prismaCode: error.code,
-          prismaError: error.message,
-        });
-      } else {
-        console.log(error);
-        throw new InternalServerErrorException();
-      }
-    }
+      }),
+      {
+        excludeExtraneousValues: true,
+      },
+    );
   }
 
   async deleteMemberById(id: number): Promise<GetMemberDto> {
-    try {
-      return plainToInstance(
-        GetMemberDto,
-        await this.prisma.member.update({
-          where: { id: id, active: true },
-          data: { active: false },
-        }),
-        {
-          excludeExtraneousValues: true,
-        },
-      );
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new BadRequestException({
-          prismaVersion: error.clientVersion,
-          prismaCode: error.code,
-          prismaError: error.message,
-        });
-      } else {
-        console.log(error);
-        throw new InternalServerErrorException();
-      }
-    }
+    return plainToInstance(
+      GetMemberDto,
+      await this.prisma.member.update({
+        where: { id: id, active: true },
+        data: { active: false },
+      }),
+      {
+        excludeExtraneousValues: true,
+      },
+    );
   }
 
   async deleteMemberByUsername(username: string): Promise<GetMemberDto> {
-    try {
-      return plainToInstance(
-        GetMemberDto,
-        (
-          await this.prisma.member.updateManyAndReturn({
-            where: { username: username, active: true },
-            data: { active: false },
-          })
-        ).at(0),
-        {
-          excludeExtraneousValues: true,
-        },
-      );
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new BadRequestException({
-          prismaVersion: error.clientVersion,
-          prismaCode: error.code,
-          prismaError: error.message,
-        });
-      } else {
-        console.log(error);
-        throw new InternalServerErrorException();
-      }
-    }
+    return plainToInstance(
+      GetMemberDto,
+      (
+        await this.prisma.member.updateManyAndReturn({
+          where: { username: username, active: true },
+          data: { active: false },
+        })
+      ).at(0),
+      {
+        excludeExtraneousValues: true,
+      },
+    );
   }
 }

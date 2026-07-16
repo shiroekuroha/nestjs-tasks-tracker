@@ -3,19 +3,14 @@ import { IsNumber } from 'class-validator';
 
 import { ApiProperty } from '@nestjs/swagger';
 
-export class GetProjectMemberDto {
+export class GetTaskGroupReorderDto {
   @ApiProperty()
   @Expose()
   @IsNumber()
-  projectId!: number;
+  taskGroupId1!: number;
 
   @ApiProperty()
   @Expose()
   @IsNumber()
-  memberId!: number;
-
-  @ApiProperty()
-  @Expose()
-  @IsNumber()
-  roleId?: number;
+  taskGroupId2!: number;
 }

@@ -15,7 +15,6 @@ import {
   Put,
   Query,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiNoContentResponse,
@@ -23,7 +22,6 @@ import {
   ApiOkResponse,
 } from '@nestjs/swagger';
 
-import { AnalyticsInterceptor } from '../analytics/analytics.interceptor';
 import { AuthGuard } from '../security/guards/auth.guard';
 import { ProjectMemberGuard } from '../security/guards/project-member.guard';
 import { ProjectGuard } from '../security/guards/project.guard';
@@ -32,6 +30,7 @@ import { GetProjectMemberDto } from './dto/get-project-member.dto';
 import { GetProjectWholeDto } from './dto/get-project-whole.dto';
 import { GetProjectDto } from './dto/get-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { GetTaskGroupReorderDto } from './dto/update-taskGroup-reorder.dto';
 import { ProjectService } from './project.service';
 
 @Controller('projects')
@@ -39,7 +38,6 @@ import { ProjectService } from './project.service';
 export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
@@ -78,7 +76,6 @@ export class ProjectController {
     };
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
@@ -89,15 +86,14 @@ export class ProjectController {
   })
   async getProject(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<{ data: GetProjectDto }> {
+  ): Promise<GetProjectDto> {
     const result = await this.projectService.getProject(id);
 
-    if (result) return { data: result };
+    if (result) return result;
 
     throw new NotFoundException();
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Put(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
@@ -109,26 +105,22 @@ export class ProjectController {
   async updateProject(
     @Param('id', ParseIntPipe) id: number,
     @Body() data: UpdateProjectDto,
-  ): Promise<{ data: GetProjectDto }> {
-    return { data: await this.projectService.updateProject(id, data) };
+  ): Promise<GetProjectDto> {
+    return await this.projectService.updateProject(id, data);
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Post(':memberId')
-  @HttpCode(HttpStatus.OK)
+  @HttpCode(HttpStatus.CREATED)
   @ApiOkResponse({
     description: 'Project created.',
   })
   async createProject(
     @Body() data: CreateProjectDto,
     @Param('memberId', ParseIntPipe) memberId: number,
-  ): Promise<{ data: GetProjectDto }> {
-    return {
-      data: await this.projectService.createProject(data, memberId),
-    };
+  ): Promise<GetProjectDto> {
+    return await this.projectService.createProject(data, memberId);
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse({
@@ -136,11 +128,25 @@ export class ProjectController {
   })
   async deleteProject(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<{ data: GetProjectDto }> {
-    return { data: await this.projectService.deleteProject(id) };
+  ): Promise<GetProjectDto> {
+    return await this.projectService.deleteProject(id);
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
+  @Put(':id/reorder')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({
+    description: 'Project updated.',
+  })
+  @ApiNotFoundResponse({
+    description: 'Project not found.',
+  })
+  async reorderProject(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() data: GetTaskGroupReorderDto,
+  ): Promise<GetProjectDto> {
+    return await this.projectService.reorderTaskGroup(id, data);
+  }
+
   @Get(':id/whole')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
@@ -148,10 +154,10 @@ export class ProjectController {
   })
   async getProjectWhole(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<{ data: GetProjectWholeDto }> {
+  ): Promise<GetProjectWholeDto> {
     const result = await this.projectService.getProjectWhole(id);
 
-    if (result) return { data: result };
+    if (result) return result;
 
     throw new NotFoundException();
   }
@@ -160,7 +166,6 @@ export class ProjectController {
   // ----------------------------- Member Management ----------------------------- //
   // ----------------------------------------------------------------------------- //
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Get(':id/members')
   @UseGuards(ProjectMemberGuard)
   @HttpCode(HttpStatus.OK)
@@ -169,14 +174,13 @@ export class ProjectController {
   })
   async getProjectMembers(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<{ data: GetProjectMemberDto[] }> {
-    return { data: await this.projectService.getProjectMembers(id) };
+  ): Promise<GetProjectMemberDto[]> {
+    return await this.projectService.getProjectMembers(id);
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Post(':id/members/:memberId')
   @UseGuards(ProjectMemberGuard)
-  @HttpCode(HttpStatus.OK)
+  @HttpCode(HttpStatus.CREATED)
   @ApiOkResponse({
     description: 'Project member added.',
   })
@@ -184,17 +188,14 @@ export class ProjectController {
     @Param('id', ParseIntPipe) pid: number,
     @Param('memberId', ParseIntPipe) mid: number,
     @Query('roleId', new ParseIntPipe({ optional: true })) role_id: number,
-  ): Promise<{ data: GetProjectMemberDto }> {
-    return {
-      data: await this.projectService.addProjectMember(
-        pid,
-        mid,
-        role_id ?? null,
-      ),
-    };
+  ): Promise<GetProjectMemberDto> {
+    return await this.projectService.addProjectMember(
+      pid,
+      mid,
+      role_id ?? null,
+    );
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Delete(':id/members/:memberId')
   @UseGuards(ProjectMemberGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -204,11 +205,10 @@ export class ProjectController {
   async removeProjectMember(
     @Param('id', ParseIntPipe) pid: number,
     @Param('memberId', ParseIntPipe) mid: number,
-  ): Promise<{ data: GetProjectMemberDto }> {
-    return { data: await this.projectService.removeProjectMember(pid, mid) };
+  ): Promise<GetProjectMemberDto> {
+    return await this.projectService.removeProjectMember(pid, mid);
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Put(':id/members/:mid/role/:rid')
   @UseGuards(ProjectMemberGuard)
   @HttpCode(HttpStatus.OK)
@@ -219,9 +219,7 @@ export class ProjectController {
     @Param('id', ParseIntPipe) pid: number,
     @Param('mid', ParseIntPipe) mid: number,
     @Param('rid', ParseIntPipe) rid: number,
-  ): Promise<{ data: GetProjectMemberDto }> {
-    return {
-      data: await this.projectService.changeProjectMemberRole(pid, mid, rid),
-    };
+  ): Promise<GetProjectMemberDto> {
+    return await this.projectService.changeProjectMemberRole(pid, mid, rid);
   }
 }

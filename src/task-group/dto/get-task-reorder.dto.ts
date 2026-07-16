@@ -1,16 +1,16 @@
 import { Expose } from 'class-transformer';
-import { IsString } from 'class-validator';
+import { IsNumber } from 'class-validator';
 
 import { ApiProperty } from '@nestjs/swagger';
 
-export class GetPermissionDto {
+export class GetTaskReorderDto {
   @ApiProperty()
   @Expose()
-  @IsString()
-  scope!: string;
+  @IsNumber()
+  taskId1!: number;
 
   @ApiProperty()
   @Expose()
-  @IsString()
-  action!: string;
+  @IsNumber()
+  taskId2!: number;
 }

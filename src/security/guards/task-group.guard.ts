@@ -64,8 +64,6 @@ export class TaskGroupGuard implements CanActivate {
 
         return false;
       } catch (error) {
-        console.log(error);
-
         return false;
       }
     }

@@ -1,5 +1,13 @@
 import { Expose } from 'class-transformer';
-import { IsDate, IsInt, Length, MinLength } from 'class-validator';
+import {
+  IsDate,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Length,
+  ValidateIf,
+} from 'class-validator';
 
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -13,6 +21,7 @@ export class CreateTaskDto {
 
   @ApiProperty()
   @Expose()
+  @IsString()
   description!: string;
 
   @ApiProperty()
@@ -22,15 +31,20 @@ export class CreateTaskDto {
 
   @ApiProperty()
   @Expose()
+  @IsEnum(StatusType)
   status!: StatusType;
 
   @ApiProperty()
   @Expose()
+  @ValidateIf((_, value) => value)
+  @IsOptional()
   @IsDate()
-  startDate!: Date;
+  startDate?: Date;
 
   @ApiProperty()
   @Expose()
+  @ValidateIf((_, value) => value)
+  @IsOptional()
   @IsDate()
-  dueDate!: Date;
+  dueDate?: Date;
 }

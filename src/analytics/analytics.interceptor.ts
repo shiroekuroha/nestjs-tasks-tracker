@@ -13,7 +13,7 @@ export class AnalyticsInterceptor implements NestInterceptor {
     const req = context.switchToHttp().getRequest();
     const now = Date.now();
 
-    console.log(`API: ${req.method} ${req.originalUrl}`);
+    console.log(`[${new Date()}] API: ${req.method} ${req.originalUrl}`);
 
     return next.handle().pipe(
       tap((data) => {

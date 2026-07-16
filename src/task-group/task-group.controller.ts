@@ -15,7 +15,6 @@ import {
   Put,
   Query,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiNoContentResponse,
@@ -23,11 +22,11 @@ import {
   ApiOkResponse,
 } from '@nestjs/swagger';
 
-import { AnalyticsInterceptor } from '../analytics/analytics.interceptor';
 import { AuthGuard } from '../security/guards/auth.guard';
 import { TaskGroupGuard } from '../security/guards/task-group.guard';
 import { CreateTaskGroupDto } from './dto/create-task-group.dto';
 import { GetTaskGroupDto } from './dto/get-task-group.dto';
+import { GetTaskReorderDto } from './dto/get-task-reorder.dto';
 import { UpdateTaskGroupDto } from './dto/update-task-group.dto';
 import { TaskGroupService } from './task-group.service';
 
@@ -36,7 +35,6 @@ import { TaskGroupService } from './task-group.service';
 export class TaskGroupController {
   constructor(private readonly taskGroupService: TaskGroupService) {}
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'TaskGroups found.' })
@@ -73,65 +71,66 @@ export class TaskGroupController {
     };
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'TaskGroup found.' })
   @ApiNotFoundResponse({ description: 'TaskGroup not found.' })
   async getTaskGroup(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<{ data: GetTaskGroupDto }> {
+  ): Promise<GetTaskGroupDto> {
     const result = await this.taskGroupService.getTaskGroup(id);
 
-    if (result) return { data: result };
+    if (result) return result;
 
     throw new NotFoundException();
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Put(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'TaskGroup updated.' })
   async updateTaskGroup(
     @Param('id', ParseIntPipe) id: number,
     @Body() data: UpdateTaskGroupDto,
-  ): Promise<{ data: GetTaskGroupDto }> {
-    return { data: await this.taskGroupService.updateTaskGroup(id, data) };
+  ): Promise<GetTaskGroupDto> {
+    return await this.taskGroupService.updateTaskGroup(id, data);
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
+  @Put(':id/reorder')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ description: 'TaskGroup updated.' })
+  async reorderTaskGroup(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() data: GetTaskReorderDto,
+  ): Promise<any> {
+    return await this.taskGroupService.reorderTask(id, data);
+  }
+
   @Put(':id/:projectId')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'TaskGroup updated.' })
   async relinkTaskGroup(
     @Param('id', ParseIntPipe) id: number,
     @Param('projectId', ParseIntPipe) projectId: number,
-  ): Promise<{ data: GetTaskGroupDto }> {
-    return {
-      data: await this.taskGroupService.relinkTaskGroup(id, projectId),
-    };
+  ): Promise<GetTaskGroupDto> {
+    return await this.taskGroupService.relinkTaskGroup(id, projectId);
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Post(':projectId')
-  @HttpCode(HttpStatus.OK)
+  @HttpCode(HttpStatus.CREATED)
   @ApiOkResponse({ description: 'TaskGroup created.' })
   async createTaskGroup(
     @Body() data: CreateTaskGroupDto,
     @Param('projectId', ParseIntPipe) projectId: number,
-  ): Promise<{ data: GetTaskGroupDto | null }> {
-    return {
-      data: await this.taskGroupService.createTaskGroup(data, projectId),
-    };
+  ): Promise<GetTaskGroupDto> {
+    return await this.taskGroupService.createTaskGroup(data, projectId);
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse({ description: 'TaskGroup created.' })
   async deleteTaskGroup(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<{ data: GetTaskGroupDto }> {
-    return { data: await this.taskGroupService.deleteTaskGroup(id) };
+  ): Promise<GetTaskGroupDto> {
+    return await this.taskGroupService.deleteTaskGroup(id);
   }
 }

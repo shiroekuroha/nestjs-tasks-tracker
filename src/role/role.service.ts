@@ -4,7 +4,7 @@ import { Min } from 'class-validator';
 import {
   BadRequestException,
   Injectable,
-  InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 
 import { Prisma } from '../generated/prisma/client';
@@ -46,75 +46,36 @@ export class RoleService {
   }
 
   async updateRole(id: number, data: UpdateRoleDto): Promise<GetRoleDto> {
-    try {
-      return plainToInstance(
-        GetRoleDto,
-        await this.prisma.role.update({
-          where: { id: id },
-          data: { ...data },
-        }),
-        {
-          excludeExtraneousValues: true,
-        },
-      );
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new BadRequestException({
-          prismaVersion: error.clientVersion,
-          prismaCode: error.code,
-          prismaError: error.message,
-        });
-      } else {
-        console.log(error);
-        throw new InternalServerErrorException();
-      }
-    }
+    return plainToInstance(
+      GetRoleDto,
+      await this.prisma.role.update({
+        where: { id: id },
+        data: { ...data },
+      }),
+      {
+        excludeExtraneousValues: true,
+      },
+    );
   }
 
   async createRole(data: CreateRoleDto): Promise<GetRoleDto> {
-    try {
-      return plainToInstance(
-        GetRoleDto,
-        await this.prisma.role.create({ data: { ...data } }),
-        {
-          excludeExtraneousValues: true,
-        },
-      );
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new BadRequestException({
-          prismaVersion: error.clientVersion,
-          prismaCode: error.code,
-          prismaError: error.message,
-        });
-      } else {
-        console.log(error);
-        throw new InternalServerErrorException();
-      }
-    }
+    return plainToInstance(
+      GetRoleDto,
+      await this.prisma.role.create({ data: { ...data } }),
+      {
+        excludeExtraneousValues: true,
+      },
+    );
   }
 
   async deleteRole(id: number): Promise<GetRoleDto> {
-    try {
-      return plainToInstance(
-        GetRoleDto,
-        await this.prisma.role.delete({ where: { id: id } }),
-        {
-          excludeExtraneousValues: true,
-        },
-      );
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new BadRequestException({
-          prismaVersion: error.clientVersion,
-          prismaCode: error.code,
-          prismaError: error.message,
-        });
-      } else {
-        console.log(error);
-        throw new InternalServerErrorException();
-      }
-    }
+    return plainToInstance(
+      GetRoleDto,
+      await this.prisma.role.delete({ where: { id: id } }),
+      {
+        excludeExtraneousValues: true,
+      },
+    );
   }
 
   async rolePermissions(id: number): Promise<GetPermissionDto[]> {

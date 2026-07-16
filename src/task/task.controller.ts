@@ -15,7 +15,6 @@ import {
   Put,
   Query,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiNoContentResponse,
@@ -23,7 +22,6 @@ import {
   ApiOkResponse,
 } from '@nestjs/swagger';
 
-import { AnalyticsInterceptor } from '../analytics/analytics.interceptor';
 import { AuthGuard } from '../security/guards/auth.guard';
 import { TaskGuard } from '../security/guards/task.guard';
 import { CreateAttachmentDto } from './dto/create-attachment.dto';
@@ -40,7 +38,6 @@ import { TaskService } from './task.service';
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'Tasks found.' })
@@ -77,22 +74,18 @@ export class TaskController {
     };
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'Task found.' })
   @ApiNotFoundResponse({ description: 'Task not found.' })
-  async getTask(
-    @Param('id', ParseIntPipe) id: number,
-  ): Promise<{ data: GetTaskDto }> {
+  async getTask(@Param('id', ParseIntPipe) id: number): Promise<GetTaskDto> {
     const result = await this.taskService.getTask(id);
 
-    if (result) return { data: result };
+    if (result) return result;
 
     throw new NotFoundException();
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Put(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'Task updated.' })
@@ -100,11 +93,10 @@ export class TaskController {
   async updateTask(
     @Param('id', ParseIntPipe) id: number,
     @Body() data: UpdateTaskDto,
-  ): Promise<{ data: GetTaskDto }> {
-    return { data: await this.taskService.updateTask(id, data) };
+  ): Promise<GetTaskDto> {
+    return await this.taskService.updateTask(id, data);
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Put(':id/:taskGroupId')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'Task updated.' })
@@ -112,72 +104,62 @@ export class TaskController {
   async relinkTask(
     @Param('id', ParseIntPipe) id: number,
     @Param('taskGroupId', ParseIntPipe) taskGroupId: number,
-  ): Promise<{ data: GetTaskDto }> {
-    return { data: await this.taskService.relinkTask(id, taskGroupId) };
+  ): Promise<GetTaskDto> {
+    return await this.taskService.relinkTask(id, taskGroupId);
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Post(':taskGroupId')
-  @HttpCode(HttpStatus.OK)
+  @HttpCode(HttpStatus.CREATED)
   @ApiOkResponse({ description: 'Task created.' })
   async createTask(
     @Body() data: CreateTaskDto,
     @Param('taskGroupId', ParseIntPipe) taskGroupId: number,
-  ): Promise<{ data: GetTaskDto | null }> {
-    return {
-      data: await this.taskService.createTask(data, taskGroupId),
-    };
+  ): Promise<GetTaskDto | null> {
+    return await this.taskService.createTask(data, taskGroupId);
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse({ description: 'Task deleted.' })
-  async deleteTask(
-    @Param('id', ParseIntPipe) id: number,
-  ): Promise<{ data: GetTaskDto }> {
-    return { data: await this.taskService.deleteTask(id) };
+  async deleteTask(@Param('id', ParseIntPipe) id: number): Promise<GetTaskDto> {
+    return await this.taskService.deleteTask(id);
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Post('attachments/:id')
-  @HttpCode(HttpStatus.OK)
+  @HttpCode(HttpStatus.CREATED)
   @ApiOkResponse({ description: 'Attachment created.' })
   async addAttachment(
     @Param('id', ParseIntPipe) id: number,
     @Body() data: CreateAttachmentDto,
-  ): Promise<{ data: GetAttachmentDto }> {
-    return { data: await this.taskService.addAttachment(id, data) };
+  ): Promise<GetAttachmentDto> {
+    return await this.taskService.addAttachment(id, data);
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Delete('attachments/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse({ description: 'Attachment deleted.' })
   async removeAttachment(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<{ data: GetAttachmentDto }> {
-    return { data: await this.taskService.removeAttachment(id) };
+  ): Promise<GetAttachmentDto> {
+    return await this.taskService.removeAttachment(id);
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Post('checklists/:id')
-  @HttpCode(HttpStatus.OK)
+  @HttpCode(HttpStatus.CREATED)
   @ApiOkResponse({ description: 'Checklist created.' })
   async addChecklist(
     @Param('id', ParseIntPipe) id: number,
     @Body() data: CreateCheckListDto,
-  ): Promise<{ data: GetChecklistDto }> {
-    return { data: await this.taskService.addCheckList(id, data) };
+  ): Promise<GetChecklistDto> {
+    return await this.taskService.addCheckList(id, data);
   }
 
-  @UseInterceptors(AnalyticsInterceptor)
   @Delete('checklists/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse({ description: 'Checklist deleted.' })
   async removeChecklist(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<{ data: GetChecklistDto }> {
-    return { data: await this.taskService.removeCheckList(id) };
+  ): Promise<GetChecklistDto> {
+    return await this.taskService.removeCheckList(id);
   }
 }

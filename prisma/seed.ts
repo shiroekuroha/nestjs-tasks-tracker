@@ -18,8 +18,8 @@ async function main() {
   await prisma.member.createMany({
     data: [
       {
-        username: 'dnguyen',
-        password: 'admin123',
+        username: 'dnguyen1',
+        password: '!Admin123',
         firstName: 'Duy',
         lastName: 'Nguyen',
         birthdate: '2003-01-08T00:00:00Z',
@@ -10237,6 +10237,16 @@ async function main() {
     data: [
       {
         projectId: 1,
+        memberId: 1,
+        roleId: 1,
+      },
+      {
+        projectId: 2,
+        memberId: 1,
+        roleId: 1,
+      },
+      {
+        projectId: 3,
         memberId: 1,
         roleId: 1,
       },

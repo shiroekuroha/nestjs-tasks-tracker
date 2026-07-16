@@ -11,6 +11,7 @@ import { RoleModule } from './role/role.module';
 import { SecurityModule } from './security/security.module';
 import { TaskGroupModule } from './task-group/task-group.module';
 import { TaskModule } from './task/task.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { TaskModule } from './task/task.module';
     ProjectModule,
     TaskGroupModule,
     TaskModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

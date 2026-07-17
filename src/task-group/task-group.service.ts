@@ -2,7 +2,6 @@ import { plainToInstance } from 'class-transformer';
 
 import { BadRequestException, Injectable } from '@nestjs/common';
 
-import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTaskGroupDto } from './dto/create-task-group.dto';
 import { GetTaskGroupDto } from './dto/get-task-group.dto';

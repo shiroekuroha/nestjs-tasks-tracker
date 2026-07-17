@@ -11,8 +11,7 @@ import {
 
 import { Optional } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
-
-import { StatusType } from '../../generated/prisma/enums';
+import { StatusType } from '@prisma/client';
 
 export class UpdateTaskDto {
   @ApiProperty()

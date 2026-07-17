@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { MailModule } from './mail/mail.module';
 import { MemberModule } from './member/member.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PrismaService } from './prisma/prisma.service';
@@ -11,7 +13,6 @@ import { RoleModule } from './role/role.module';
 import { SecurityModule } from './security/security.module';
 import { TaskGroupModule } from './task-group/task-group.module';
 import { TaskModule } from './task/task.module';
-import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -24,6 +25,9 @@ import { MailModule } from './mail/mail.module';
     TaskGroupModule,
     TaskModule,
     MailModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

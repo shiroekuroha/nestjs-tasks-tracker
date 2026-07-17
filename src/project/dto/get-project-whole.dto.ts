@@ -8,8 +8,8 @@ import {
 } from 'class-validator';
 
 import { ApiProperty } from '@nestjs/swagger';
+import { StatusType } from '@prisma/client';
 
-import { StatusType } from '../../generated/prisma/enums';
 import { GetMemberDto } from '../../member/dto/get-member.dto';
 import { GetAttachmentDto } from '../../task/dto/get-attachment.dto';
 import { GetChecklistDto } from '../../task/dto/get-checklist.dto';

@@ -21,6 +21,8 @@ export class ProjectGuard implements CanActivate {
     try {
       if (request.method == 'POST') return true;
 
+      if (!projectId) return true;
+
       const memberPermissions: GetPermissionDto[] = plainToInstance(
         GetPermissionDto,
         (

@@ -6,8 +6,7 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-
-import { Prisma } from '../generated/prisma/client';
+import { Prisma } from '@prisma/client';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -59,6 +58,13 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       };
 
       switch (exception.code) {
+        case 'P1001':
+          logAndThrow(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            'Cannot reach database',
+            details,
+          );
+
         case 'P2002':
           logAndThrow(
             HttpStatus.BAD_REQUEST,

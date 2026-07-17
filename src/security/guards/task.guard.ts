@@ -75,8 +75,6 @@ export class TaskGuard implements CanActivate {
     const taskId: number = Number(request.params['id']);
 
     try {
-      console.log('Trying to authorize task access');
-
       const result: GetPermissionDto[] = plainToInstance(
         GetPermissionDto,
         (

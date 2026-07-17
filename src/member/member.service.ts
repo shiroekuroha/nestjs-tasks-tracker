@@ -1,13 +1,7 @@
 import { plainToInstance } from 'class-transformer';
 
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 
-import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { GetProjectDto } from '../project/dto/get-project.dto';
 import { CreateMemberDto } from './dto/create-member.dto';

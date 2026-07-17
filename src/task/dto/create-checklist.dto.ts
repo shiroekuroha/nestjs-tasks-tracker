@@ -1,5 +1,5 @@
 import { Expose } from 'class-transformer';
-import { IsBoolean, isBoolean, IsString, Length } from 'class-validator';
+import { IsBoolean, IsString, Length } from 'class-validator';
 
 import { ApiProperty } from '@nestjs/swagger';
 

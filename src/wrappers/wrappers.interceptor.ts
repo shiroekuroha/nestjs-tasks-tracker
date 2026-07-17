@@ -1,5 +1,4 @@
-import { error } from 'console';
-import { catchError, map, Observable, tap } from 'rxjs';
+import { catchError, map, Observable } from 'rxjs';
 
 import {
   CallHandler,

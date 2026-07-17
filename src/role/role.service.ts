@@ -1,13 +1,7 @@
 import { plainToInstance } from 'class-transformer';
-import { Min } from 'class-validator';
 
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
-import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { GetPermissionDto } from './dto/get-permission.dto';

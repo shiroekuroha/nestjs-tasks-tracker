@@ -5,8 +5,6 @@ import {
   ExceptionFilter,
   HttpException,
   HttpStatus,
-  NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 
 import { Prisma } from '../generated/prisma/client';

@@ -71,8 +71,6 @@ export class TaskGroupGuard implements CanActivate {
     const taskGroupId: number = Number(request.params['id']);
 
     try {
-      console.log('Trying to authorize task-group access');
-
       const result: GetPermissionDto[] = plainToInstance(
         GetPermissionDto,
         (

@@ -29,8 +29,8 @@ export class ProjectMemberGuard implements CanActivate {
         (
           await this.prisma.projectMember.findFirst({
             where: {
-              projectId: projectId,
-              memberId: payload.sub,
+              projectId: Number(projectId),
+              memberId: Number(payload.sub),
             },
             include: {
               role: {

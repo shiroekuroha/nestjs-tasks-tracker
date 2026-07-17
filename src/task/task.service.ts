@@ -55,17 +55,30 @@ export class TaskService {
     );
   }
 
-  async relinkTask(id: number, taskGroupId: number): Promise<GetTaskDto> {
-    return plainToInstance(
-      GetTaskDto,
-      await this.prisma.task.update({
+  async relinkTask(
+    id: number,
+    taskGroupId: number,
+  ): Promise<{ result: string }> {
+    const result = await this.prisma.$transaction(async (tx) => {
+      const max = await tx.task.aggregate({
+        where: { taskGroupId: taskGroupId },
+        _max: { position: true },
+      });
+
+      await tx.task.update({
         where: { id: id },
-        data: { taskGroup: { connect: { id: taskGroupId } } },
-      }),
-      {
-        excludeExtraneousValues: true,
-      },
-    );
+        data: {
+          taskGroup: {
+            connect: {
+              id: taskGroupId,
+            },
+          },
+          position: (max._max.position ?? -1) + 1,
+        },
+      });
+    });
+
+    return { result: 'Transaction is good!' };
   }
 
   async createTask(

@@ -104,7 +104,7 @@ export class TaskController {
   async relinkTask(
     @Param('id', ParseIntPipe) id: number,
     @Param('taskGroupId', ParseIntPipe) taskGroupId: number,
-  ): Promise<GetTaskDto> {
+  ): Promise<{ result: string }> {
     return await this.taskService.relinkTask(id, taskGroupId);
   }
 

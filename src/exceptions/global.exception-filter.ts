@@ -39,10 +39,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         `-----------------------------------------------------------------------------------------------------------`,
       );
 
-      res.status(HttpStatus.BAD_REQUEST).json({
+      res.status(status).json({
         method: req.method,
         route: req.originalUrl,
-        status: HttpStatus.BAD_REQUEST,
+        status: status,
         success: false,
         error: { message: msg, details: details },
       });
@@ -55,6 +55,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         version: exception.clientVersion,
         code: exception.code,
         message: exception.message,
+        meta: exception.meta ?? {},
       };
 
       switch (exception.code) {

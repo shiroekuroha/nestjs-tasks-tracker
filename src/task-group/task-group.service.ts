@@ -59,17 +59,27 @@ export class TaskGroupService {
   async relinkTaskGroup(
     id: number,
     projectId: number,
-  ): Promise<GetTaskGroupDto> {
-    return plainToInstance(
-      GetTaskGroupDto,
-      await this.prisma.taskGroup.update({
+  ): Promise<{ result: string }> {
+    const result = await this.prisma.$transaction(async (tx) => {
+      const max = await tx.taskGroup.aggregate({
+        where: { projectId: projectId },
+        _max: { position: true },
+      });
+
+      await tx.taskGroup.update({
         where: { id: id },
-        data: { project: { connect: { id: projectId } } },
-      }),
-      {
-        excludeExtraneousValues: true,
-      },
-    );
+        data: {
+          project: {
+            connect: {
+              id: projectId,
+            },
+          },
+          position: (max._max.position ?? -1) + 1,
+        },
+      });
+    });
+
+    return { result: 'Transaction is good!' };
   }
 
   async reorderTask(id: number, data: GetTaskReorderDto): Promise<any> {

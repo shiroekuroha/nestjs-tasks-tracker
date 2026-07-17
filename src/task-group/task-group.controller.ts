@@ -111,7 +111,7 @@ export class TaskGroupController {
   async relinkTaskGroup(
     @Param('id', ParseIntPipe) id: number,
     @Param('projectId', ParseIntPipe) projectId: number,
-  ): Promise<GetTaskGroupDto> {
+  ): Promise<{ result: string }> {
     return await this.taskGroupService.relinkTaskGroup(id, projectId);
   }
 

@@ -53,6 +53,7 @@ describe('MemberController (e2e)', () => {
   afterAll(async () => {
     await app.close();
   });
+
   it('should return 401 when unauthenticated', async () => {
     await request(app.getHttpServer())
       .get('/members')

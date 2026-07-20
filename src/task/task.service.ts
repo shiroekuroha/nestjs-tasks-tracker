@@ -73,7 +73,7 @@ export class TaskService {
               id: taskGroupId,
             },
           },
-          position: (max._max.position ?? -1) + 1,
+          position: (max._max.position ?? 0) + 1,
         },
       });
     });
@@ -87,17 +87,26 @@ export class TaskService {
   ): Promise<GetTaskDto> {
     return plainToInstance(
       GetTaskDto,
-      await this.prisma.task.create({
-        data: {
-          ...data,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          taskGroup: { connect: { id: taskGroupId } },
-        },
+      await this.prisma.$transaction(async (tx) => {
+        const max = await tx.task.aggregate({
+          where: { taskGroupId: taskGroupId },
+          _max: { position: true },
+        });
+
+        return await tx.task.create({
+          data: {
+            ...data,
+            position: (max._max.position ?? 0) + 1,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            taskGroup: {
+              connect: {
+                id: taskGroupId,
+              },
+            },
+          },
+        });
       }),
-      {
-        excludeExtraneousValues: true,
-      },
     );
   }
 

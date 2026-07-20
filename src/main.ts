@@ -31,14 +31,14 @@ async function bootstrap() {
     new WrappersInterceptor(),
   );
 
+  app.useGlobalFilters(new GlobalExceptionFilter());
+
   app.enableCors({
     origin: `http://localhost:3000`,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   });
-
-  app.useGlobalFilters(new GlobalExceptionFilter());
 
   await app.listen(process.env.PORT ?? 8000);
 }

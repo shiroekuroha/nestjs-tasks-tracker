@@ -1,4 +1,4 @@
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import {
   IsDate,
   IsEnum,
@@ -41,6 +41,7 @@ export class GetTaskDto {
   @Expose()
   @ValidateIf((_, value) => value)
   @IsOptional()
+  @Type(() => Date)
   @IsDate()
   startDate?: Date;
 
@@ -48,16 +49,19 @@ export class GetTaskDto {
   @Expose()
   @ValidateIf((_, value) => value)
   @IsOptional()
+  @Type(() => Date)
   @IsDate()
   dueDate?: Date;
 
   @ApiProperty()
   @Expose()
+  @Type(() => Date)
   @IsDate()
   createdAt!: Date;
 
   @ApiProperty()
   @Expose()
+  @Type(() => Date)
   @IsDate()
   updatedAt!: Date;
 

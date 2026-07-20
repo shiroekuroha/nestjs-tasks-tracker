@@ -44,6 +44,10 @@ export class AuthController {
 
   private extractTokenFromHeader(request: Request): string | null {
     const [type, token] = request.headers['authorization']?.split(' ') ?? [];
-    return type === 'Bearer' ? token : null;
+    return type.toLowerCase() === 'Bearer'.toLowerCase()
+      ? token.length > 0
+        ? token
+        : null
+      : null;
   }
 }

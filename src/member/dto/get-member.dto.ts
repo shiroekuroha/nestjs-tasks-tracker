@@ -1,4 +1,4 @@
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import { IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
 
 import { ApiProperty } from '@nestjs/swagger';
@@ -26,6 +26,7 @@ export class GetMemberDto {
 
   @ApiProperty()
   @Expose()
+  @Type(() => Date)
   @IsDate()
   birthdate!: Date;
 

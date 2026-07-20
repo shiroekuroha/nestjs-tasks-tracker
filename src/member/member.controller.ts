@@ -23,13 +23,14 @@ import {
 
 import { GetProjectDto } from '../project/dto/get-project.dto';
 import { AuthGuard } from '../security/guards/auth.guard';
+import { MemberGuard } from '../security/guards/member.guard';
 import { CreateMemberDto } from './dto/create-member.dto';
 import { GetMemberDto } from './dto/get-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { MemberService } from './member.service';
 
 @Controller('members')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, MemberGuard)
 export class MemberController {
   constructor(private readonly memberService: MemberService) {}
 
@@ -69,16 +70,6 @@ export class MemberController {
     };
   }
 
-  @Get('id/:id/projects')
-  @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ description: 'Member found.' })
-  @ApiNotFoundResponse({ description: 'Member not found.' })
-  async getMemberProjects(
-    @Param('id', ParseIntPipe) id: number,
-  ): Promise<GetProjectDto[]> {
-    return await this.memberService.getMemberProjects(id);
-  }
-
   @Get('id/:id')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'Member found.' })
@@ -107,6 +98,26 @@ export class MemberController {
     throw new NotFoundException();
   }
 
+  @Get('id/:id/projects')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ description: 'Member found.' })
+  @ApiNotFoundResponse({ description: 'Member not found.' })
+  async getMemberProjectsById(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<GetProjectDto[]> {
+    return await this.memberService.getMemberProjectsById(id);
+  }
+
+  @Get('username/:username/projects')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ description: 'Member found.' })
+  @ApiNotFoundResponse({ description: 'Member not found.' })
+  async getMemberProjectsByUsername(
+    @Param('username') username: string,
+  ): Promise<GetProjectDto[]> {
+    return await this.memberService.getMemberProjectsByUsername(username);
+  }
+
   @Put('id/:id')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'Member updated.' })
@@ -132,6 +143,15 @@ export class MemberController {
   @ApiCreatedResponse({ description: 'Member created.' })
   async createMember(@Body() data: CreateMemberDto): Promise<GetMemberDto> {
     return await this.memberService.createMember(data);
+  }
+
+  @Post('id/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiCreatedResponse({ description: 'Member restored.' })
+  async restoreMember(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<GetMemberDto> {
+    return await this.memberService.restoreMember(id);
   }
 
   @Delete('id/:id')

@@ -17,10 +17,4 @@ export class UpdateTaskGroupDto {
   @IsString()
   @Length(7, 9)
   color?: string;
-
-  @ApiProperty()
-  @Expose()
-  @ValidateIf((_, value) => value !== undefined)
-  @IsNumber()
-  position?: number;
 }

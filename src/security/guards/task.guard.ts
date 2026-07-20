@@ -74,6 +74,10 @@ export class TaskGuard implements CanActivate {
 
     const taskId: number = Number(request.params['id']);
 
+    if (!taskId) {
+      return true;
+    }
+
     try {
       const result: GetPermissionDto[] = plainToInstance(
         GetPermissionDto,

@@ -1,4 +1,4 @@
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import {
   IsDate,
   IsEnum,
@@ -25,11 +25,6 @@ export class CreateTaskDto {
 
   @ApiProperty()
   @Expose()
-  @IsInt()
-  position!: number;
-
-  @ApiProperty()
-  @Expose()
   @IsEnum(StatusType)
   status!: StatusType;
 
@@ -37,6 +32,7 @@ export class CreateTaskDto {
   @Expose()
   @ValidateIf((_, value) => value)
   @IsOptional()
+  @Type(() => Date)
   @IsDate()
   startDate?: Date;
 
@@ -44,6 +40,7 @@ export class CreateTaskDto {
   @Expose()
   @ValidateIf((_, value) => value)
   @IsOptional()
+  @Type(() => Date)
   @IsDate()
   dueDate?: Date;
 }

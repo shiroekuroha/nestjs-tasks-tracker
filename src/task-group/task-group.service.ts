@@ -122,12 +122,24 @@ export class TaskGroupService {
   ): Promise<GetTaskGroupDto> {
     return plainToInstance(
       GetTaskGroupDto,
-      await this.prisma.taskGroup.create({
-        data: { ...data, project: { connect: { id: projectId } } },
+      await this.prisma.$transaction(async (tx) => {
+        const max = await tx.taskGroup.aggregate({
+          where: { projectId: projectId },
+          _max: { position: true },
+        });
+
+        return await tx.taskGroup.create({
+          data: {
+            ...data,
+            position: (max._max.position ?? 0) + 1,
+            project: {
+              connect: {
+                id: projectId,
+              },
+            },
+          },
+        });
       }),
-      {
-        excludeExtraneousValues: true,
-      },
     );
   }
 

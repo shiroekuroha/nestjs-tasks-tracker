@@ -32,12 +32,35 @@ export class MemberService {
     return await this.prisma.member.count({ where: { active: true } });
   }
 
-  async getMemberProjects(id: number): Promise<GetProjectDto[]> {
+  async getMemberProjectsById(id: number): Promise<GetProjectDto[]> {
     return (
       (
         await this.prisma.member.findUnique({
           where: {
             id: id,
+            active: true,
+          },
+          include: {
+            projectMembers: {
+              include: {
+                project: true,
+              },
+            },
+          },
+        })
+      )?.projectMembers.map((value) => value.project) ?? []
+    );
+  }
+
+  async getMemberProjectsByUsername(
+    username: string,
+  ): Promise<GetProjectDto[]> {
+    return (
+      (
+        await this.prisma.member.findFirst({
+          where: {
+            username: username,
+            active: true,
           },
           include: {
             projectMembers: {
@@ -128,6 +151,17 @@ export class MemberService {
       {
         excludeExtraneousValues: true,
       },
+    );
+  }
+
+  async restoreMember(id: number): Promise<GetMemberDto> {
+    return plainToInstance(
+      GetMemberDto,
+      await this.prisma.member.update({
+        where: { id: id },
+        data: { active: true },
+      }),
+      { excludeExtraneousValues: true },
     );
   }
 

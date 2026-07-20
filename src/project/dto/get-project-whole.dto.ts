@@ -95,22 +95,26 @@ export class GetProjectTaskMiddleDto {
   @ApiProperty()
   @Expose()
   @IsOptional()
+  @Type(() => Date)
   @IsDate()
   startDate?: Date;
 
   @ApiProperty()
   @Expose()
   @IsOptional()
+  @Type(() => Date)
   @IsDate()
   dueDate?: Date;
 
   @ApiProperty()
   @Expose()
+  @Type(() => Date)
   @IsDate()
   createdAt!: Date;
 
   @ApiProperty()
   @Expose()
+  @Type(() => Date)
   @IsDate()
   updatedAt!: Date;
 

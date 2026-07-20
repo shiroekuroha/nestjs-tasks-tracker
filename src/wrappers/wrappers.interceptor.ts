@@ -18,7 +18,7 @@ export class WrappersInterceptor implements NestInterceptor {
         const res = context.switchToHttp().getResponse();
         const { meta, ...result } = data ?? {};
 
-        if ([200, 201, 204].includes(res.statusCode)) {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
           data = {
             method: req.method,
             route: req.originalUrl,

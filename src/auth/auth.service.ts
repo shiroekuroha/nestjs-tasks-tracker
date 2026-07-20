@@ -14,9 +14,9 @@ export class AuthService {
   ) {}
 
   async verify(access_token: string): Promise<GetMemberDto> {
-    if (!access_token) throw new UnauthorizedException();
-
     try {
+      if (!access_token) throw new UnauthorizedException();
+
       return plainToInstance(
         GetMemberDto,
         await this.prisma.member.findUnique({

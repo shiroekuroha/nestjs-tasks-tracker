@@ -9,7 +9,7 @@ import { GlobalExceptionFilter } from '../exceptions/global.exception-filter';
 import { PrismaService } from '../prisma/prisma.service';
 import { WrappersInterceptor } from '../wrappers/wrappers.interceptor';
 
-describe('ProjectController (e2e)', () => {
+describe('RoleController (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let accessToken = '';
@@ -54,22 +54,24 @@ describe('ProjectController (e2e)', () => {
     await app.close();
   });
 
-  it('should not authorize', async () => {
+  it('should return 401 when unauthenticated', async () => {
     await request(app.getHttpServer())
-      .get('/projects')
+      .get('/roles')
+      .send()
       .expect(HttpStatus.UNAUTHORIZED);
   });
 
-  it('should have all projects', async () => {
+  it('should return all roles', async () => {
     await request(app.getHttpServer())
-      .get('/projects')
+      .get('/roles')
       .set('Authorization', `Bearer ${accessToken}`)
+      .send()
       .expect(HttpStatus.OK)
       .expect((res) => {
         expect(res.body.data).toBeDefined();
 
-        res.body.data.forEach((project) => {
-          expect(project).toMatchObject({
+        res.body.data.forEach((element) => {
+          expect(element).toMatchObject({
             id: expect.any(Number),
             name: expect.any(String),
           });
@@ -79,139 +81,109 @@ describe('ProjectController (e2e)', () => {
       });
   });
 
-  it('should have one project', async () => {
+  it('should return a role by id', async () => {
     await request(app.getHttpServer())
-      .get('/projects/1')
+      .get('/roles/1')
       .set('Authorization', `Bearer ${accessToken}`)
+      .send()
       .expect(HttpStatus.OK)
       .expect((res) => {
         expect(res.body.data).toMatchObject({
-          id: 1,
+          id: expect.any(Number),
           name: expect.any(String),
         });
       });
   });
 
-  it('should reject invalid id', async () => {
+  it('should return 400 for an invalid role id', async () => {
     await request(app.getHttpServer())
-      .get('/projects/test')
+      .get('/roles/test')
       .set('Authorization', `Bearer ${accessToken}`)
+      .send()
       .expect(HttpStatus.BAD_REQUEST);
   });
 
-  it('should return not found', async () => {
+  it('should return 404 when role id does not exist', async () => {
     await request(app.getHttpServer())
-      .get('/projects/999999')
+      .get('/roles/999999')
       .set('Authorization', `Bearer ${accessToken}`)
+      .send()
       .expect(HttpStatus.NOT_FOUND);
   });
 
-  it('should update project', async () => {
+  it('should update a role', async () => {
     await request(app.getHttpServer())
-      .put('/projects/1')
+      .put('/roles/1')
       .set('Authorization', `Bearer ${accessToken}`)
       .send({
-        name: 'Updated Project',
+        name: 'Updated Role',
       })
       .expect(HttpStatus.OK)
       .expect((res) => {
-        expect(res.body.data.name).toBe('Updated Project');
+        expect(res.body.data.name).toBe('Updated Role');
       });
   });
 
-  it('should reject invalid update', async () => {
+  it('should create a role', async () => {
     await request(app.getHttpServer())
-      .put('/projects/1')
+      .post('/roles')
       .set('Authorization', `Bearer ${accessToken}`)
       .send({
-        nameins: 'abc',
-      })
-      .expect(HttpStatus.BAD_REQUEST);
-  });
-
-  it('should create project', async () => {
-    await request(app.getHttpServer())
-      .post('/projects/1')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({
-        name: 'Integration Test Project',
+        name: 'Test Role',
       })
       .expect(HttpStatus.CREATED)
       .expect((res) => {
-        expect(res.body.data.name).toBe('Integration Test Project');
+        expect(res.body.data.name).toBe('Test Role');
       });
   });
 
-  it('should reject invalid project', async () => {
+  it('should return 400 when creating a role with invalid data', async () => {
     await request(app.getHttpServer())
-      .post('/projects/1')
+      .post('/roles')
       .set('Authorization', `Bearer ${accessToken}`)
       .send({
-        name: 'abc',
+        name: '',
       })
       .expect(HttpStatus.BAD_REQUEST);
   });
 
-  it('should delete project', async () => {
-    const created = await request(app.getHttpServer())
-      .post('/projects/1')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({
-        name: 'Test Project',
-      });
-
+  it('should delete a role', async () => {
     await request(app.getHttpServer())
-      .delete(`/projects/${created.body.data.id}`)
+      .delete('/roles/4')
       .set('Authorization', `Bearer ${accessToken}`)
       .expect(HttpStatus.NO_CONTENT);
   });
 
-  it('should return forbidden for deleting project with no role', async () => {
+  it('should return 404 after the role has been deleted', async () => {
     await request(app.getHttpServer())
-      .delete('/projects/999999')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .expect(HttpStatus.FORBIDDEN);
-  });
-
-  it('should get project whole', async () => {
-    await request(app.getHttpServer())
-      .get('/projects/1/whole')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .expect(HttpStatus.OK);
-  });
-
-  it('should return whole project not found', async () => {
-    await request(app.getHttpServer())
-      .get('/projects/999999/whole')
+      .get('/roles/4')
       .set('Authorization', `Bearer ${accessToken}`)
       .expect(HttpStatus.NOT_FOUND);
   });
 
-  it('should get project members', async () => {
+  it('should return 404 when deleting a non-existent role', async () => {
     await request(app.getHttpServer())
-      .get('/projects/1/members')
+      .delete('/roles/999999')
       .set('Authorization', `Bearer ${accessToken}`)
-      .expect(HttpStatus.OK);
+      .expect(HttpStatus.NOT_FOUND);
   });
 
-  it('should add project member', async () => {
+  it('should return role permissions', async () => {
     await request(app.getHttpServer())
-      .post('/projects/1/members/2')
+      .get('/roles/1/permissions')
       .set('Authorization', `Bearer ${accessToken}`)
-      .expect(HttpStatus.CREATED);
+      .send()
+      .expect(HttpStatus.OK)
+      .expect((res) => {
+        expect(Array.isArray(res.body.data)).toBe(true);
+      });
   });
 
-  it('should change member role', async () => {
+  it('should return 400 when getting permissions with invalid role id', async () => {
     await request(app.getHttpServer())
-      .put('/projects/1/members/2/role/1')
+      .get('/roles/test/permissions')
       .set('Authorization', `Bearer ${accessToken}`)
-      .expect(HttpStatus.OK);
-  });
-
-  it('should remove project member', async () => {
-    await request(app.getHttpServer())
-      .delete('/projects/1/members/2')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .expect(HttpStatus.NO_CONTENT);
+      .send()
+      .expect(HttpStatus.BAD_REQUEST);
   });
 });

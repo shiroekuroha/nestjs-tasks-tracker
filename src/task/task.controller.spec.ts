@@ -9,7 +9,7 @@ import { GlobalExceptionFilter } from '../exceptions/global.exception-filter';
 import { PrismaService } from '../prisma/prisma.service';
 import { WrappersInterceptor } from '../wrappers/wrappers.interceptor';
 
-describe('ProjectController (e2e)', () => {
+describe('TaskController (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let accessToken = '';
@@ -54,164 +54,133 @@ describe('ProjectController (e2e)', () => {
     await app.close();
   });
 
-  it('should not authorize', async () => {
+  it('should return 401 when unauthenticated', async () => {
     await request(app.getHttpServer())
-      .get('/projects')
+      .get('/tasks')
+      .send()
       .expect(HttpStatus.UNAUTHORIZED);
   });
 
-  it('should have all projects', async () => {
+  it('should return all tasks', async () => {
     await request(app.getHttpServer())
-      .get('/projects')
+      .get('/tasks')
       .set('Authorization', `Bearer ${accessToken}`)
+      .send()
       .expect(HttpStatus.OK)
       .expect((res) => {
-        expect(res.body.data).toBeDefined();
+        expect(res.body).toBeDefined();
 
-        res.body.data.forEach((project) => {
-          expect(project).toMatchObject({
+        res.body.data.forEach((element) => {
+          expect(element).toMatchObject({
             id: expect.any(Number),
             name: expect.any(String),
+            description: expect.any(String),
+            position: expect.any(Number),
+            status: expect.any(String),
           });
+          expect(element.createdAt).toBeDefined();
+          expect(element.updatedAt).toBeDefined();
         });
 
         expect(res.body.meta).toBeDefined();
       });
   });
 
-  it('should have one project', async () => {
+  it('should return a task by id', async () => {
     await request(app.getHttpServer())
-      .get('/projects/1')
+      .get('/tasks/1')
       .set('Authorization', `Bearer ${accessToken}`)
+      .send()
       .expect(HttpStatus.OK)
       .expect((res) => {
+        expect(res.body.data).toBeDefined();
+
         expect(res.body.data).toMatchObject({
-          id: 1,
+          id: expect.any(Number),
           name: expect.any(String),
+          description: expect.any(String),
+          position: expect.any(Number),
+          status: expect.any(String),
         });
+        expect(res.body.data.createdAt).toBeDefined();
+        expect(res.body.data.updatedAt).toBeDefined();
       });
   });
 
-  it('should reject invalid id', async () => {
+  it('should return 400 for an invalid task id', async () => {
     await request(app.getHttpServer())
-      .get('/projects/test')
+      .get('/tasks/test')
       .set('Authorization', `Bearer ${accessToken}`)
+      .send()
       .expect(HttpStatus.BAD_REQUEST);
   });
 
-  it('should return not found', async () => {
+  it('should return 404 when task id does not exist', async () => {
     await request(app.getHttpServer())
-      .get('/projects/999999')
+      .get('/tasks/999999')
       .set('Authorization', `Bearer ${accessToken}`)
+      .send()
       .expect(HttpStatus.NOT_FOUND);
   });
 
-  it('should update project', async () => {
+  it('should update a task', async () => {
     await request(app.getHttpServer())
-      .put('/projects/1')
+      .put('/tasks/1')
       .set('Authorization', `Bearer ${accessToken}`)
       .send({
-        name: 'Updated Project',
+        name: 'Updated Task',
       })
       .expect(HttpStatus.OK)
       .expect((res) => {
-        expect(res.body.data.name).toBe('Updated Project');
+        expect(res.body.data.name).toBe('Updated Task');
       });
   });
 
-  it('should reject invalid update', async () => {
+  it('should create a task', async () => {
     await request(app.getHttpServer())
-      .put('/projects/1')
+      .post('/tasks/1')
       .set('Authorization', `Bearer ${accessToken}`)
       .send({
-        nameins: 'abc',
-      })
-      .expect(HttpStatus.BAD_REQUEST);
-  });
-
-  it('should create project', async () => {
-    await request(app.getHttpServer())
-      .post('/projects/1')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({
-        name: 'Integration Test Project',
+        name: 'New Task 1',
+        description: "There's nothing",
+        status: 'TODO',
+        startDate: null,
+        dueDate: null,
       })
       .expect(HttpStatus.CREATED)
       .expect((res) => {
-        expect(res.body.data.name).toBe('Integration Test Project');
+        expect(res.body.data.name).toBe('New Task 1');
       });
   });
 
-  it('should reject invalid project', async () => {
+  it('should return 400 when creating a role with invalid data', async () => {
     await request(app.getHttpServer())
-      .post('/projects/1')
+      .post('/tasks/1')
       .set('Authorization', `Bearer ${accessToken}`)
       .send({
-        name: 'abc',
+        name: '',
       })
       .expect(HttpStatus.BAD_REQUEST);
   });
 
-  it('should delete project', async () => {
-    const created = await request(app.getHttpServer())
-      .post('/projects/1')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({
-        name: 'Test Project',
-      });
-
+  it('should delete a task', async () => {
     await request(app.getHttpServer())
-      .delete(`/projects/${created.body.data.id}`)
+      .delete('/tasks/2')
       .set('Authorization', `Bearer ${accessToken}`)
       .expect(HttpStatus.NO_CONTENT);
   });
 
-  it('should return forbidden for deleting project with no role', async () => {
+  it('should return 404 after the task has been deleted', async () => {
     await request(app.getHttpServer())
-      .delete('/projects/999999')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .expect(HttpStatus.FORBIDDEN);
-  });
-
-  it('should get project whole', async () => {
-    await request(app.getHttpServer())
-      .get('/projects/1/whole')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .expect(HttpStatus.OK);
-  });
-
-  it('should return whole project not found', async () => {
-    await request(app.getHttpServer())
-      .get('/projects/999999/whole')
+      .get('/tasks/2')
       .set('Authorization', `Bearer ${accessToken}`)
       .expect(HttpStatus.NOT_FOUND);
   });
 
-  it('should get project members', async () => {
+  it('should return 403 when deleting a non-existent task(outside of permission scope)', async () => {
     await request(app.getHttpServer())
-      .get('/projects/1/members')
+      .delete('/tasks/999999')
       .set('Authorization', `Bearer ${accessToken}`)
-      .expect(HttpStatus.OK);
-  });
-
-  it('should add project member', async () => {
-    await request(app.getHttpServer())
-      .post('/projects/1/members/2')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .expect(HttpStatus.CREATED);
-  });
-
-  it('should change member role', async () => {
-    await request(app.getHttpServer())
-      .put('/projects/1/members/2/role/1')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .expect(HttpStatus.OK);
-  });
-
-  it('should remove project member', async () => {
-    await request(app.getHttpServer())
-      .delete('/projects/1/members/2')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .expect(HttpStatus.NO_CONTENT);
+      .expect(HttpStatus.FORBIDDEN);
   });
 });

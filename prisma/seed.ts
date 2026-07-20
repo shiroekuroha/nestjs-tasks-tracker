@@ -5,7 +5,9 @@ import { PrismaClient } from '@prisma/client';
 
 export class PrismaService extends PrismaClient {
   constructor() {
-    super();
+    const connectionString = `${process.env.DATABASE_URL}`;
+    const adapter = new PrismaPg({ connectionString });
+    super({ adapter });
   }
 }
 
@@ -10251,6 +10253,8 @@ async function main() {
   });
 
   console.log('Database seeded!');
+
+  await prisma.$disconnect();
 }
 
 main()
@@ -10258,6 +10262,4 @@ main()
     console.error(e);
     process.exit(1);
   })
-  .finally(async () => {
-    // await prisma.$disconnect();
-  });
+  .finally(async () => {});

@@ -1,4 +1,4 @@
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import {
   IsDate,
   IsEmail,
@@ -51,6 +51,7 @@ export class CreateMemberDto {
 
   @ApiProperty()
   @Expose()
+  @Type(() => Date)
   @IsDate()
   birthdate!: Date;
 

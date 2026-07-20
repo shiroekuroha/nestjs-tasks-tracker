@@ -15,9 +15,4 @@ export class CreateTaskGroupDto {
   @IsString()
   @Length(7, 9)
   color!: string;
-
-  @ApiProperty()
-  @Expose()
-  @IsNumber()
-  position!: number;
 }

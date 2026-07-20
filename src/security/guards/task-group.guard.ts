@@ -70,6 +70,10 @@ export class TaskGroupGuard implements CanActivate {
 
     const taskGroupId: number = Number(request.params['id']);
 
+    if (!taskGroupId) {
+      return true;
+    }
+
     try {
       const result: GetPermissionDto[] = plainToInstance(
         GetPermissionDto,

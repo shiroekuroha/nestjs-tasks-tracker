@@ -59,13 +59,13 @@ export class TaskGroupController {
     const count = await this.taskGroupService.getTaskGroupCount();
 
     return {
-      data: plainToInstance(GetTaskGroupDto, result, {
-        excludeExtraneousValues: true,
-      }),
+      data: plainToInstance(GetTaskGroupDto, result),
       meta: {
-        page: page ?? def_page,
+        page: (page ?? def_page > 0) ? (page ?? def_page) : def_page,
         item: result.length,
-        total_pages: Math.ceil(count / (limit ?? def_limit)),
+        total_pages: Math.ceil(
+          count / ((limit ?? def_limit > 0) ? (limit ?? def_limit) : def_limit),
+        ),
         total_items: count,
       },
     };

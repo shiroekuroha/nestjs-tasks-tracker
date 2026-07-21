@@ -1,16 +1,12 @@
 import { Expose } from 'class-transformer';
 import { IsString, Length, Matches } from 'class-validator';
 
-import { ApiProperty } from '@nestjs/swagger';
-
 export class UserLoginDto {
-  @ApiProperty()
   @Expose()
   @IsString()
   @Length(8, 50)
   username!: string;
 
-  @ApiProperty()
   @Expose()
   @IsString()
   @Length(8, 50)

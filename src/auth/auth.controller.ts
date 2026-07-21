@@ -23,7 +23,7 @@ export class AuthController {
     description: 'Returns member information.',
   })
   async getMember(@Req() req: Request): Promise<GetMemberDto> {
-    const token = this.extractTokenFromHeader(req) ?? '';
+    const token = this.authService.extractTokenFromHeader(req) ?? '';
 
     return await this.authService.verify(token);
   }
@@ -40,17 +40,5 @@ export class AuthController {
       signInDto.username,
       signInDto.password,
     );
-  }
-
-  private extractTokenFromHeader(request: Request): string | null {
-    const [type, token] = request.headers['authorization']?.split(' ') ?? [];
-    if (type && token)
-      return type.toLowerCase() === 'Bearer'.toLowerCase()
-        ? token.length > 0
-          ? token
-          : null
-        : null;
-
-    return null;
   }
 }

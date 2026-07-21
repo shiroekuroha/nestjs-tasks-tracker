@@ -24,7 +24,6 @@ export class AuthService {
             id: (await this.jwtService.verifyAsync(access_token)).sub,
           },
         }),
-        { excludeExtraneousValues: true },
       );
     } catch {
       throw new UnauthorizedException();
@@ -53,5 +52,17 @@ export class AuthService {
       reason: 'Wrong username/password or account no longer active.',
       statusCode: 401,
     });
+  }
+
+  extractTokenFromHeader(request: Request): string | null {
+    const [type, token] = request.headers['authorization']?.split(' ') ?? [];
+    if (type && token)
+      return type.toLowerCase() === 'Bearer'.toLowerCase()
+        ? token.length > 0
+          ? token
+          : null
+        : null;
+
+    return null;
   }
 }

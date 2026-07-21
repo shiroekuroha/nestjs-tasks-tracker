@@ -1,24 +1,9 @@
 import {
-  Body,
-  Controller,
-  DefaultValuePipe,
-  Delete,
-  Get,
-  HttpCode,
-  HttpStatus,
-  NotFoundException,
-  Param,
-  ParseIntPipe,
-  Post,
-  Put,
-  Query,
-  UseGuards,
+    Body, Controller, DefaultValuePipe, Delete, Get, HttpCode, HttpStatus, NotFoundException, Param,
+    ParseIntPipe, Post, Put, Query, UseGuards
 } from '@nestjs/common';
 import {
-  ApiCreatedResponse,
-  ApiNoContentResponse,
-  ApiNotFoundResponse,
-  ApiOkResponse,
+    ApiCreatedResponse, ApiNoContentResponse, ApiNotFoundResponse, ApiOkResponse
 } from '@nestjs/swagger';
 
 import { GetProjectDto } from '../project/dto/get-project.dto';
@@ -62,9 +47,11 @@ export class MemberController {
     return {
       data: result,
       meta: {
-        page: page ?? def_page,
+        page: (page ?? def_page > 0) ? (page ?? def_page) : def_page,
         item: result.length,
-        total_pages: Math.ceil(count / (limit ?? def_limit)),
+        total_pages: Math.ceil(
+          count / ((limit ?? def_limit > 0) ? (limit ?? def_limit) : def_limit),
+        ),
         total_items: count,
       },
     };
@@ -146,7 +133,7 @@ export class MemberController {
   }
 
   @Post('id/:id')
-  @HttpCode(HttpStatus.OK)
+  @HttpCode(HttpStatus.CREATED)
   @ApiCreatedResponse({ description: 'Member restored.' })
   async restoreMember(
     @Param('id', ParseIntPipe) id: number,

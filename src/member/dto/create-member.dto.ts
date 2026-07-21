@@ -9,16 +9,12 @@ import {
   Matches,
 } from 'class-validator';
 
-import { ApiProperty } from '@nestjs/swagger';
-
 export class CreateMemberDto {
-  @ApiProperty()
   @Expose()
   @IsString()
   @Length(8, 50)
   username!: string;
 
-  @ApiProperty()
   @Expose()
   @IsString()
   @Length(8, 50)
@@ -37,38 +33,32 @@ export class CreateMemberDto {
   })
   password!: string;
 
-  @ApiProperty()
   @Expose()
   @IsString()
   @Length(2, 25)
   firstName!: string;
 
-  @ApiProperty()
   @Expose()
   @IsString()
   @Length(2, 25)
   lastName!: string;
 
-  @ApiProperty()
   @Expose()
   @Type(() => Date)
   @IsDate()
   birthdate!: Date;
 
-  @ApiProperty()
   @Expose()
   @IsString()
   @IsEmail()
   email!: string;
 
-  @ApiProperty()
   @Expose()
   @IsOptional()
   @IsString()
   @IsPhoneNumber()
   phone?: string;
 
-  @ApiProperty()
   @Expose()
   @IsOptional()
   @IsString()

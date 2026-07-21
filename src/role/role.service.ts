@@ -19,9 +19,6 @@ export class RoleService {
         skip: (page - 1) * limit,
         take: limit,
       }),
-      {
-        excludeExtraneousValues: true,
-      },
     );
   }
 
@@ -33,9 +30,6 @@ export class RoleService {
     return plainToInstance(
       GetRoleDto,
       await this.prisma.role.findUnique({ where: { id: id } }),
-      {
-        excludeExtraneousValues: true,
-      },
     );
   }
 
@@ -46,9 +40,6 @@ export class RoleService {
         where: { id: id },
         data: { ...data },
       }),
-      {
-        excludeExtraneousValues: true,
-      },
     );
   }
 
@@ -56,9 +47,6 @@ export class RoleService {
     return plainToInstance(
       GetRoleDto,
       await this.prisma.role.create({ data: { ...data } }),
-      {
-        excludeExtraneousValues: true,
-      },
     );
   }
 
@@ -66,9 +54,6 @@ export class RoleService {
     return plainToInstance(
       GetRoleDto,
       await this.prisma.role.delete({ where: { id: id } }),
-      {
-        excludeExtraneousValues: true,
-      },
     );
   }
 
@@ -99,7 +84,6 @@ export class RoleService {
           action: action,
         };
       }) ?? [],
-      { excludeExtraneousValues: true },
     );
   }
 }

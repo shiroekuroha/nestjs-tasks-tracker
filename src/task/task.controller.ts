@@ -62,13 +62,13 @@ export class TaskController {
     const count = await this.taskService.getTaskCount();
 
     return {
-      data: plainToInstance(GetTaskDto, result, {
-        excludeExtraneousValues: true,
-      }),
+      data: plainToInstance(GetTaskDto, result),
       meta: {
-        page: page ?? def_page,
+        page: (page ?? def_page > 0) ? (page ?? def_page) : def_page,
         item: result.length,
-        total_pages: Math.ceil(count / (limit ?? def_limit)),
+        total_pages: Math.ceil(
+          count / ((limit ?? def_limit > 0) ? (limit ?? def_limit) : def_limit),
+        ),
         total_items: count,
       },
     };

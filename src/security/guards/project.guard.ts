@@ -47,7 +47,6 @@ export class ProjectGuard implements CanActivate {
           const [scope, action] = pm.permission.name.split(':');
           return { scope: scope, action: action };
         }) ?? [],
-        { excludeExtraneousValues: true },
       );
 
       switch (request.method) {

@@ -1,21 +1,10 @@
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import {
-  IsDate,
-  IsEmail,
-  IsNotEmpty,
-  IsOptional,
-  IsPhoneNumber,
-  IsString,
-  Length,
-  Matches,
-  ValidateIf,
-  ValidationArguments,
+    IsDate, IsEmail, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, Length, Matches, ValidateIf,
+    ValidationArguments
 } from 'class-validator';
 
-import { ApiProperty } from '@nestjs/swagger';
-
 export class UpdateMemberDto {
-  @ApiProperty()
   @Expose()
   @ValidateIf((_, value) => value !== undefined)
   @IsString({
@@ -38,7 +27,6 @@ export class UpdateMemberDto {
   })
   password?: string;
 
-  @ApiProperty()
   @Expose()
   @ValidateIf((_, value) => value !== undefined)
   @IsString({
@@ -48,7 +36,6 @@ export class UpdateMemberDto {
   @Length(2, 25)
   firstName?: string;
 
-  @ApiProperty()
   @Expose()
   @ValidateIf((_, value) => value !== undefined)
   @IsString({
@@ -58,16 +45,15 @@ export class UpdateMemberDto {
   @Length(2, 25)
   lastName?: string;
 
-  @ApiProperty()
   @Expose()
   @ValidateIf((_, value) => value !== undefined)
+  @Type(() => Date)
   @IsDate({
     message: (args: ValidationArguments) =>
       `${args.property} must be a date and cannot be null`,
   })
   birthdate?: Date;
 
-  @ApiProperty()
   @Expose()
   @ValidateIf((_, value) => value !== undefined)
   @IsNotEmpty()
@@ -78,7 +64,6 @@ export class UpdateMemberDto {
   @IsEmail()
   email?: string;
 
-  @ApiProperty()
   @Expose()
   @IsOptional()
   @IsNotEmpty()
@@ -89,7 +74,6 @@ export class UpdateMemberDto {
   @IsPhoneNumber()
   phone?: string;
 
-  @ApiProperty()
   @Expose()
   @IsOptional()
   @IsNotEmpty()

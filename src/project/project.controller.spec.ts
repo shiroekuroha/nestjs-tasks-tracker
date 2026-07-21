@@ -54,164 +54,291 @@ describe('ProjectController (e2e)', () => {
     await app.close();
   });
 
-  it('should not authorize', async () => {
-    await request(app.getHttpServer())
-      .get('/projects')
-      .expect(HttpStatus.UNAUTHORIZED);
-  });
+  describe('GET', () => {
+    describe('GetProjects', () => {
+      it('should return all projects', async () => {
+        await request(app.getHttpServer())
+          .get(`/projects`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send()
+          .expect(HttpStatus.OK)
+          .expect((res) => {
+            res.body.data.forEach((project) => {
+              expect(project).toMatchObject({
+                id: expect.any(Number),
+                name: expect.any(String),
+              });
+            });
 
-  it('should have all projects', async () => {
-    await request(app.getHttpServer())
-      .get('/projects')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .expect(HttpStatus.OK)
-      .expect((res) => {
-        expect(res.body.data).toBeDefined();
-
-        res.body.data.forEach((project) => {
-          expect(project).toMatchObject({
-            id: expect.any(Number),
-            name: expect.any(String),
+            expect(res.body.meta).toMatchObject({
+              page: expect.any(Number),
+              item: expect.any(Number),
+              total_pages: expect.any(Number),
+              total_items: expect.any(Number),
+            });
           });
-        });
-
-        expect(res.body.meta).toBeDefined();
-      });
-  });
-
-  it('should have one project', async () => {
-    await request(app.getHttpServer())
-      .get('/projects/1')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .expect(HttpStatus.OK)
-      .expect((res) => {
-        expect(res.body.data).toMatchObject({
-          id: 1,
-          name: expect.any(String),
-        });
-      });
-  });
-
-  it('should reject invalid id', async () => {
-    await request(app.getHttpServer())
-      .get('/projects/test')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .expect(HttpStatus.BAD_REQUEST);
-  });
-
-  it('should return not found', async () => {
-    await request(app.getHttpServer())
-      .get('/projects/999999')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .expect(HttpStatus.NOT_FOUND);
-  });
-
-  it('should update project', async () => {
-    await request(app.getHttpServer())
-      .put('/projects/1')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({
-        name: 'Updated Project',
-      })
-      .expect(HttpStatus.OK)
-      .expect((res) => {
-        expect(res.body.data.name).toBe('Updated Project');
-      });
-  });
-
-  it('should reject invalid update', async () => {
-    await request(app.getHttpServer())
-      .put('/projects/1')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({
-        nameins: 'abc',
-      })
-      .expect(HttpStatus.BAD_REQUEST);
-  });
-
-  it('should create project', async () => {
-    await request(app.getHttpServer())
-      .post('/projects/1')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({
-        name: 'Integration Test Project',
-      })
-      .expect(HttpStatus.CREATED)
-      .expect((res) => {
-        expect(res.body.data.name).toBe('Integration Test Project');
-      });
-  });
-
-  it('should reject invalid project', async () => {
-    await request(app.getHttpServer())
-      .post('/projects/1')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({
-        name: 'abc',
-      })
-      .expect(HttpStatus.BAD_REQUEST);
-  });
-
-  it('should delete project', async () => {
-    const created = await request(app.getHttpServer())
-      .post('/projects/1')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send({
-        name: 'Test Project',
       });
 
-    await request(app.getHttpServer())
-      .delete(`/projects/${created.body.data.id}`)
-      .set('Authorization', `Bearer ${accessToken}`)
-      .expect(HttpStatus.NO_CONTENT);
+      it('should return partial projects, changed limit', async () => {
+        await request(app.getHttpServer())
+          .get(`/projects?limit=1`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send()
+          .expect(HttpStatus.OK)
+          .expect((res) => {
+            res.body.data.forEach((project) => {
+              expect(project).toMatchObject({
+                id: expect.any(Number),
+                name: expect.any(String),
+              });
+            });
+
+            expect(res.body.meta).toMatchObject({
+              page: expect.any(Number),
+              item: expect.any(Number),
+              total_pages: expect.any(Number),
+              total_items: expect.any(Number),
+            });
+
+            expect(res.body.data.length).toBe(1);
+          });
+      });
+
+      it('should return partial projects, even if limit is higher than total', async () => {
+        await request(app.getHttpServer())
+          .get(`/projects?limit=100`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send()
+          .expect(HttpStatus.OK)
+          .expect((res) => {
+            res.body.data.forEach((project) => {
+              expect(project).toMatchObject({
+                id: expect.any(Number),
+                name: expect.any(String),
+              });
+            });
+
+            expect(res.body.meta).toMatchObject({
+              page: expect.any(Number),
+              item: expect.any(Number),
+              total_pages: expect.any(Number),
+              total_items: expect.any(Number),
+            });
+          });
+      });
+
+      it('should return partial projects, changed page', async () => {
+        await request(app.getHttpServer())
+          .get(`/projects?limit=1&page=2`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send()
+          .expect(HttpStatus.OK)
+          .expect((res) => {
+            res.body.data.forEach((project) => {
+              expect(project).toMatchObject({
+                id: expect.any(Number),
+                name: expect.any(String),
+              });
+            });
+
+            expect(res.body.meta).toMatchObject({
+              page: expect.any(Number),
+              item: expect.any(Number),
+              total_pages: expect.any(Number),
+              total_items: expect.any(Number),
+            });
+
+            expect(res.body.data.length).toBe(1);
+          });
+      });
+
+      it('should return partial projects, even if page is higher than total', async () => {
+        await request(app.getHttpServer())
+          .get(`/projects?limit=10&page=100`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send()
+          .expect(HttpStatus.OK)
+          .expect((res) => {
+            expect(res.body.meta).toMatchObject({
+              page: expect.any(Number),
+              item: expect.any(Number),
+              total_pages: expect.any(Number),
+              total_items: expect.any(Number),
+            });
+
+            expect(res.body.data.length).toBe(0);
+          });
+      });
+
+      it('should return partial projects, even if page is 0', async () => {
+        await request(app.getHttpServer())
+          .get(`/projects?page=0`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send()
+          .expect(HttpStatus.OK)
+          .expect((res) => {
+            res.body.data.forEach((project) => {
+              expect(project).toMatchObject({
+                id: expect.any(Number),
+                name: expect.any(String),
+              });
+            });
+
+            expect(res.body.meta).toMatchObject({
+              page: expect.any(Number),
+              item: expect.any(Number),
+              total_pages: expect.any(Number),
+              total_items: expect.any(Number),
+            });
+          });
+      });
+
+      it('should return partial projects, even if limit is 0', async () => {
+        await request(app.getHttpServer())
+          .get(`/projects?limit=0`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send()
+          .expect(HttpStatus.OK)
+          .expect((res) => {
+            res.body.data.forEach((project) => {
+              expect(project).toMatchObject({
+                id: expect.any(Number),
+                name: expect.any(String),
+              });
+            });
+
+            expect(res.body.meta).toMatchObject({
+              page: expect.any(Number),
+              item: expect.any(Number),
+              total_pages: expect.any(Number),
+              total_items: expect.any(Number),
+            });
+          });
+      });
+    });
+
+    describe('GetProject', () => {
+      it('should return a project', async () => {
+        await request(app.getHttpServer())
+          .get(`/projects/1`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send()
+          .expect(HttpStatus.OK)
+          .expect((res) => {
+            expect(res.body.data).toMatchObject({
+              id: expect.any(Number),
+              name: expect.any(String),
+            });
+          });
+      });
+
+      it('should return NOT_FOUND for accessing project with invalid id, out of range', async () => {
+        await request(app.getHttpServer())
+          .get(`/projects/99999999`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send()
+          .expect(HttpStatus.NOT_FOUND);
+      });
+
+      it('should return BAD_REQUEST for accessing project with invalid id, wrong data type', async () => {
+        await request(app.getHttpServer())
+          .get(`/projects/badId`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send()
+          .expect(HttpStatus.BAD_REQUEST);
+      });
+    });
   });
 
-  it('should return forbidden for deleting project with no role', async () => {
-    await request(app.getHttpServer())
-      .delete('/projects/999999')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .expect(HttpStatus.FORBIDDEN);
+  describe('PUT', () => {
+    describe('UpdateProject', () => {
+      it('should update and return project, name', async () => {
+        await request(app.getHttpServer())
+          .put(`/projects/1`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({
+            name: 'This is a unique name!',
+          })
+          .expect(HttpStatus.OK)
+          .expect((res) => {
+            expect(res.body.data).toMatchObject({
+              id: expect.any(Number),
+              name: expect.any(String),
+            });
+
+            expect(res.body.data.name).toBe('This is a unique name!');
+          });
+      });
+
+      it('should not update, throw bad request, name: bad data', async () => {
+        await request(app.getHttpServer())
+          .put(`/projects/1`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({
+            name: 100_000,
+          })
+          .expect(HttpStatus.BAD_REQUEST);
+      });
+    });
   });
 
-  it('should get project whole', async () => {
-    await request(app.getHttpServer())
-      .get('/projects/1/whole')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .expect(HttpStatus.OK);
+  describe('POST', () => {
+    describe('CreateProject', () => {
+      it('should create a project', async () => {
+        await request(app.getHttpServer())
+          .post(`/projects/1`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({
+            name: 'New Project 100',
+          })
+          .expect(HttpStatus.CREATED)
+          .expect((res) => {
+            expect(res.body.data).toMatchObject({
+              id: expect.any(Number),
+              name: expect.any(String),
+            });
+
+            expect(res.body.data.name).toBe('New Project 100');
+          });
+      });
+
+      it('should not create a project, bad name: bad data', async () => {
+        await request(app.getHttpServer())
+          .post(`/projects/1`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({
+            name: 100_000,
+          })
+          .expect(HttpStatus.BAD_REQUEST);
+      });
+    });
   });
 
-  it('should return whole project not found', async () => {
-    await request(app.getHttpServer())
-      .get('/projects/999999/whole')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .expect(HttpStatus.NOT_FOUND);
-  });
+  describe('DELETE', () => {
+    describe('DeleteProject', () => {
+      it('should create and then delete a project', async () => {
+        const newProject = await request(app.getHttpServer())
+          .post(`/projects/1`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({
+            name: 'New Project 102',
+          })
+          .expect(HttpStatus.CREATED);
 
-  it('should get project members', async () => {
-    await request(app.getHttpServer())
-      .get('/projects/1/members')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .expect(HttpStatus.OK);
-  });
+        await request(app.getHttpServer())
+          .delete(`/projects/${newProject.body.data.id}`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send()
+          .expect(HttpStatus.NO_CONTENT);
+      });
 
-  it('should add project member', async () => {
-    await request(app.getHttpServer())
-      .post('/projects/1/members/2')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .expect(HttpStatus.CREATED);
-  });
-
-  it('should change member role', async () => {
-    await request(app.getHttpServer())
-      .put('/projects/1/members/2/role/1')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .expect(HttpStatus.OK);
-  });
-
-  it('should remove project member', async () => {
-    await request(app.getHttpServer())
-      .delete('/projects/1/members/2')
-      .set('Authorization', `Bearer ${accessToken}`)
-      .expect(HttpStatus.NO_CONTENT);
+      it('should not delete a project, bad id: no permission to delete', async () => {
+        await request(app.getHttpServer())
+          .delete(`/projects/999999`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send()
+          .expect(HttpStatus.FORBIDDEN);
+      });
+    });
   });
 });

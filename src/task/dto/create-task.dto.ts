@@ -9,26 +9,21 @@ import {
   ValidateIf,
 } from 'class-validator';
 
-import { ApiProperty } from '@nestjs/swagger';
 import { StatusType } from '@prisma/client';
 
 export class CreateTaskDto {
-  @ApiProperty()
   @Expose()
   @Length(4, 50)
   name!: string;
 
-  @ApiProperty()
   @Expose()
   @IsString()
   description!: string;
 
-  @ApiProperty()
   @Expose()
   @IsEnum(StatusType)
   status!: StatusType;
 
-  @ApiProperty()
   @Expose()
   @ValidateIf((_, value) => value)
   @IsOptional()
@@ -36,7 +31,6 @@ export class CreateTaskDto {
   @IsDate()
   startDate?: Date;
 
-  @ApiProperty()
   @Expose()
   @ValidateIf((_, value) => value)
   @IsOptional()

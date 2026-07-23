@@ -27,11 +27,11 @@ async function bootstrap() {
   );
 
   app.useGlobalInterceptors(
-    new AnalyticsInterceptor(),
-    new WrappersInterceptor(),
+    app.get(AnalyticsInterceptor),
+    app.get(WrappersInterceptor),
   );
 
-  app.useGlobalFilters(new GlobalExceptionFilter());
+  app.useGlobalFilters(app.get(GlobalExceptionFilter));
 
   app.enableCors({
     origin: `http://localhost:3000`,

@@ -7,7 +7,6 @@ import {
   Post,
   Req,
 } from '@nestjs/common';
-import { ApiOkResponse } from '@nestjs/swagger';
 
 import { GetMemberDto } from '../member/dto/get-member.dto';
 import { AuthService } from './auth.service';
@@ -19,9 +18,6 @@ export class AuthController {
 
   @Get('member')
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({
-    description: 'Returns member information.',
-  })
   async getMember(@Req() req: Request): Promise<GetMemberDto> {
     const token = this.authService.extractTokenFromHeader(req) ?? '';
 
@@ -30,9 +26,6 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({
-    description: 'Returns access token.',
-  })
   async signIn(
     @Body() signInDto: UserLoginDto,
   ): Promise<{ access_token: string }> {

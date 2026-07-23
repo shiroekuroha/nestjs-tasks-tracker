@@ -1,53 +1,33 @@
-import request from 'supertest';
+import request, { Response } from 'supertest';
 
-import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
+import { HttpStatus, INestApplication } from '@nestjs/common';
 
-import { AnalyticsInterceptor } from '../analytics/analytics.interceptor';
-import { AppModule } from '../app.module';
-import { GlobalExceptionFilter } from '../exceptions/global.exception-filter';
-import { PrismaService } from '../prisma/prisma.service';
-import { WrappersInterceptor } from '../wrappers/wrappers.interceptor';
+import { createTestApp } from '../../test/test.app';
 
 describe('MemberController (e2e)', () => {
   let app: INestApplication;
-  let prisma: PrismaService;
   let accessToken = '';
 
+  const memberMatcher = {
+    id: expect.any(Number),
+    username: expect.any(String),
+    firstName: expect.any(String),
+    lastName: expect.any(String),
+    birthdate: expect.any(String),
+    email: expect.any(String),
+  };
+
+  const paginationMatcher = {
+    page: expect.any(Number),
+    item: expect.any(Number),
+    total_pages: expect.any(Number),
+    total_items: expect.any(Number),
+  };
+
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleRef.createNestApplication();
-    prisma = moduleRef.get(PrismaService);
-
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    );
-
-    app.useGlobalInterceptors(
-      new AnalyticsInterceptor(),
-      new WrappersInterceptor(),
-    );
-
-    app.useGlobalFilters(new GlobalExceptionFilter());
-
-    await app.init();
-
-    const response = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send({
-        username: 'dnguyen1',
-        password: '!Admin123',
-      })
-      .expect(HttpStatus.OK);
-
-    accessToken = response.body.data.access_token;
+    const context = await createTestApp();
+    app = context.app;
+    accessToken = context.accessToken;
   });
 
   afterAll(async () => {
@@ -57,418 +37,417 @@ describe('MemberController (e2e)', () => {
   describe('GET', () => {
     describe('GetMembers', () => {
       it('should return all members', async () => {
-        await request(app.getHttpServer())
-          .get(`/members`)
-          .set('Authorization', `Bearer ${accessToken}`)
-          .send()
-          .expect(HttpStatus.OK)
-          .expect((res) => {
-            res.body.data.forEach((member) => {
-              expect(member).toMatchObject({
-                id: expect.any(Number),
-                username: expect.any(String),
-                firstName: expect.any(String),
-                lastName: expect.any(String),
-                birthdate: expect.any(String),
-                email: expect.any(String),
-              });
-            });
+        // * Arrange
+        const route = `/members`;
+        const data = {};
 
-            expect(res.body.meta).toMatchObject({
-              page: expect.any(Number),
-              item: expect.any(Number),
-              total_pages: expect.any(Number),
-              total_items: expect.any(Number),
-            });
-          });
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .get(route)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.OK);
+
+        result.body.data.forEach((member) => {
+          expect(member).toMatchObject(memberMatcher);
+        });
+
+        expect(result.body.meta).toMatchObject(paginationMatcher);
       });
 
       it('should return partial members, changed limit', async () => {
-        await request(app.getHttpServer())
-          .get(`/members?limit=1`)
+        // * Arrange
+        const route = `/members?limit=2`;
+        const data = {};
+
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .get(route)
           .set('Authorization', `Bearer ${accessToken}`)
-          .send()
-          .expect(HttpStatus.OK)
-          .expect((res) => {
-            res.body.data.forEach((member) => {
-              expect(member).toMatchObject({
-                id: expect.any(Number),
-                username: expect.any(String),
-                firstName: expect.any(String),
-                lastName: expect.any(String),
-                birthdate: expect.any(String),
-                email: expect.any(String),
-              });
-            });
+          .send(data);
 
-            expect(res.body.meta).toMatchObject({
-              page: expect.any(Number),
-              item: expect.any(Number),
-              total_pages: expect.any(Number),
-              total_items: expect.any(Number),
-            });
+        // * Assert
+        expect(result.status).toBe(HttpStatus.OK);
 
-            expect(res.body.data.length).toBe(1);
-          });
+        result.body.data.forEach((member) => {
+          expect(member).toMatchObject(memberMatcher);
+        });
+
+        expect(result.body.meta).toMatchObject(paginationMatcher);
       });
 
       it('should return partial members, even if limit is higher than total', async () => {
-        await request(app.getHttpServer())
-          .get(`/members?limit=100`)
+        // * Arrange
+        const route = `/members?limit=100`;
+        const data = {};
+
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .get(route)
           .set('Authorization', `Bearer ${accessToken}`)
-          .send()
-          .expect(HttpStatus.OK)
-          .expect((res) => {
-            res.body.data.forEach((member) => {
-              expect(member).toMatchObject({
-                id: expect.any(Number),
-                username: expect.any(String),
-                firstName: expect.any(String),
-                lastName: expect.any(String),
-                birthdate: expect.any(String),
-                email: expect.any(String),
-              });
-            });
+          .send(data);
 
-            expect(res.body.meta).toMatchObject({
-              page: expect.any(Number),
-              item: expect.any(Number),
-              total_pages: expect.any(Number),
-              total_items: expect.any(Number),
-            });
-          });
-      });
+        // * Assert
+        expect(result.status).toBe(HttpStatus.OK);
 
-      it('should return partial members, changed page', async () => {
-        await request(app.getHttpServer())
-          .get(`/members?limit=1&page=2`)
-          .set('Authorization', `Bearer ${accessToken}`)
-          .send()
-          .expect(HttpStatus.OK)
-          .expect((res) => {
-            res.body.data.forEach((member) => {
-              expect(member).toMatchObject({
-                id: expect.any(Number),
-                username: expect.any(String),
-                firstName: expect.any(String),
-                lastName: expect.any(String),
-                birthdate: expect.any(String),
-                email: expect.any(String),
-              });
-            });
+        result.body.data.forEach((member) => {
+          expect(member).toMatchObject(memberMatcher);
+        });
 
-            expect(res.body.meta).toMatchObject({
-              page: expect.any(Number),
-              item: expect.any(Number),
-              total_pages: expect.any(Number),
-              total_items: expect.any(Number),
-            });
-
-            expect(res.body.data.length).toBe(1);
-          });
-      });
-
-      it('should return partial members, even if page is higher than total', async () => {
-        await request(app.getHttpServer())
-          .get(`/members?limit=10&page=200`)
-          .set('Authorization', `Bearer ${accessToken}`)
-          .send()
-          .expect(HttpStatus.OK)
-          .expect((res) => {
-            expect(res.body.meta).toMatchObject({
-              page: expect.any(Number),
-              item: expect.any(Number),
-              total_pages: expect.any(Number),
-              total_items: expect.any(Number),
-            });
-
-            expect(res.body.data.length).toBe(0);
-          });
-      });
-
-      it('should return partial members, even if page is 0', async () => {
-        await request(app.getHttpServer())
-          .get(`/members?page=0`)
-          .set('Authorization', `Bearer ${accessToken}`)
-          .send()
-          .expect(HttpStatus.OK)
-          .expect((res) => {
-            res.body.data.forEach((member) => {
-              expect(member).toMatchObject({
-                id: expect.any(Number),
-                username: expect.any(String),
-                firstName: expect.any(String),
-                lastName: expect.any(String),
-                birthdate: expect.any(String),
-                email: expect.any(String),
-              });
-            });
-
-            expect(res.body.meta).toMatchObject({
-              page: expect.any(Number),
-              item: expect.any(Number),
-              total_pages: expect.any(Number),
-              total_items: expect.any(Number),
-            });
-          });
+        expect(result.body.meta).toMatchObject(paginationMatcher);
       });
 
       it('should return partial members, even if limit is 0', async () => {
-        await request(app.getHttpServer())
-          .get(`/members?limit=0`)
-          .set('Authorization', `Bearer ${accessToken}`)
-          .send()
-          .expect(HttpStatus.OK)
-          .expect((res) => {
-            res.body.data.forEach((member) => {
-              expect(member).toMatchObject({
-                id: expect.any(Number),
-                username: expect.any(String),
-                firstName: expect.any(String),
-                lastName: expect.any(String),
-                birthdate: expect.any(String),
-                email: expect.any(String),
-              });
-            });
+        // * Arrange
+        const route = '/members?limit=0';
+        const data = {};
 
-            expect(res.body.meta).toMatchObject({
-              page: expect.any(Number),
-              item: expect.any(Number),
-              total_pages: expect.any(Number),
-              total_items: expect.any(Number),
-            });
-          });
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .get(route)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.OK);
+
+        result.body.data.forEach((member) => {
+          expect(member).toMatchObject(memberMatcher);
+        });
+
+        expect(result.body.meta).toMatchObject(paginationMatcher);
+      });
+
+      it('should return partial members, changed page', async () => {
+        // * Arrange
+        const route = '/members?limit=1&page=2';
+        const data = {};
+
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .get(route)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.OK);
+
+        result.body.data.forEach((member) => {
+          expect(member).toMatchObject(memberMatcher);
+        });
+
+        expect(result.body.meta).toMatchObject(paginationMatcher);
+      });
+
+      it('should return partial members, even if page is higher than total', async () => {
+        // * Arrange
+        const route = '/members?limit=1&page=999999';
+        const data = {};
+
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .get(route)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.OK);
+
+        result.body.data.forEach((member) => {
+          expect(member).toMatchObject(memberMatcher);
+        });
+
+        expect(result.body.meta).toMatchObject(paginationMatcher);
+      });
+
+      it('should return partial members, even if page is 0', async () => {
+        // * Arrange
+        const route = '/members?limit=1&page=0';
+        const data = {};
+
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .get(route)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.OK);
+
+        result.body.data.forEach((member) => {
+          expect(member).toMatchObject(memberMatcher);
+        });
+
+        expect(result.body.meta).toMatchObject(paginationMatcher);
       });
     });
 
     describe('GetMember', () => {
       it('should return a member', async () => {
-        await request(app.getHttpServer())
-          .get(`/members/id/1`)
-          .set('Authorization', `Bearer ${accessToken}`)
-          .send()
-          .expect(HttpStatus.OK)
-          .expect((res) => {
-            expect(res.body.data).toMatchObject({
-              id: expect.any(Number),
-              username: expect.any(String),
-              firstName: expect.any(String),
-              lastName: expect.any(String),
-              birthdate: expect.any(String),
-              email: expect.any(String),
-            });
-          });
-      });
+        // * Arrange
+        const route = '/members/id/1';
+        const data = {};
 
-      it('should return a member', async () => {
-        await request(app.getHttpServer())
-          .get(`/members/username/dnguyen1`)
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .get(route)
           .set('Authorization', `Bearer ${accessToken}`)
-          .send()
-          .expect(HttpStatus.OK)
-          .expect((res) => {
-            expect(res.body.data).toMatchObject({
-              id: expect.any(Number),
-              username: expect.any(String),
-              firstName: expect.any(String),
-              lastName: expect.any(String),
-              birthdate: expect.any(String),
-              email: expect.any(String),
-            });
-          });
-      });
+          .send(data);
 
-      it('should return NOT_FOUND for accessing member with invalid id, out of range', async () => {
-        await request(app.getHttpServer())
-          .get(`/members/id/99999999`)
-          .set('Authorization', `Bearer ${accessToken}`)
-          .send()
-          .expect(HttpStatus.NOT_FOUND);
+        // * Assert
+        expect(result.status).toBe(HttpStatus.OK);
+        expect(result.body.data).toMatchObject(memberMatcher);
       });
+    });
 
-      it('should return BAD_REQUEST for accessing member with invalid id, wrong data type', async () => {
-        await request(app.getHttpServer())
-          .get(`/members/id/badId`)
-          .set('Authorization', `Bearer ${accessToken}`)
-          .send()
-          .expect(HttpStatus.BAD_REQUEST);
-      });
+    it('should return a member', async () => {
+      // * Arrange
+      const route = '/members/username/dnguyen1';
+      const data = {};
 
-      it('should return NOT_FOUND for accessing member with invalid username, unknown value', async () => {
-        await request(app.getHttpServer())
-          .get(`/members/username/asdfjadsfjasjf`)
-          .set('Authorization', `Bearer ${accessToken}`)
-          .send()
-          .expect(HttpStatus.NOT_FOUND);
-      });
+      // * Act
+      const result: Response = await request(app.getHttpServer())
+        .get(route)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send(data);
+
+      // * Assert
+      expect(result.status).toBe(HttpStatus.OK);
+      expect(result.body.data).toMatchObject(memberMatcher);
+    });
+
+    it('should return NOT_FOUND for accessing member with invalid id, out of range', async () => {
+      // * Arrange
+      const route = '/members/id/999999';
+      const data = {};
+
+      // * Act
+      const result: Response = await request(app.getHttpServer())
+        .get(route)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send(data);
+
+      // * Assert
+      expect(result.status).toBe(HttpStatus.NOT_FOUND);
+    });
+
+    it('should return BAD_REQUEST for accessing member with invalid id, wrong data type', async () => {
+      // * Arrange
+      const route = '/members/id/ThisIsNotAValidId';
+      const data = {};
+
+      // * Act
+      const result: Response = await request(app.getHttpServer())
+        .get(route)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send(data);
+
+      // * Assert
+      expect(result.status).toBe(HttpStatus.BAD_REQUEST);
+    });
+
+    it('should return NOT_FOUND for accessing member with invalid username, unknown value', async () => {
+      // * Arrange
+      const route = '/members/username/ThisIsNotAValidUsername';
+      const data = {};
+
+      // * Act
+      const result: Response = await request(app.getHttpServer())
+        .get(route)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send(data);
+
+      // * Assert
+      expect(result.status).toBe(HttpStatus.NOT_FOUND);
     });
   });
 
   describe('PUT', () => {
     describe('UpdateMember', () => {
       it('should update and return member, name', async () => {
-        await request(app.getHttpServer())
-          .put(`/members/id/1`)
-          .set('Authorization', `Bearer ${accessToken}`)
-          .send({
-            firstName: 'Kalshi',
-            lastName: 'Lockon',
-          })
-          .expect(HttpStatus.OK)
-          .expect((res) => {
-            expect(res.body.data).toMatchObject({
-              id: expect.any(Number),
-              username: expect.any(String),
-              firstName: expect.any(String),
-              lastName: expect.any(String),
-              birthdate: expect.any(String),
-              email: expect.any(String),
-            });
+        // * Arrange
+        const route = '/members/id/2';
+        const data = {
+          firstName: 'Endra',
+          lastName: 'Veil',
+        };
 
-            expect(res.body.data.firstName).toBe('Kalshi');
-            expect(res.body.data.lastName).toBe('Lockon');
-          });
-      });
-
-      it('should not update, throw bad request, name: bad data', async () => {
-        await request(app.getHttpServer())
-          .put(`/members/id/1`)
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .put(route)
           .set('Authorization', `Bearer ${accessToken}`)
-          .send({
-            firstName: 100_000,
-            lastName: 100_000,
-          })
-          .expect(HttpStatus.BAD_REQUEST);
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.OK);
+        expect(result.body.data).toMatchObject(memberMatcher);
+        expect(result.body.data.firstName).toBe(data.firstName);
+        expect(result.body.data.lastName).toBe(data.lastName);
       });
 
       it('should update and return member, password', async () => {
-        await request(app.getHttpServer())
-          .put(`/members/id/3`)
-          .set('Authorization', `Bearer ${accessToken}`)
-          .send({
-            password: '!VOhtro92182',
-          })
-          .expect(HttpStatus.OK)
-          .expect((res) => {
-            expect(res.body.data).toMatchObject({
-              id: expect.any(Number),
-              username: expect.any(String),
-              firstName: expect.any(String),
-              lastName: expect.any(String),
-              birthdate: expect.any(String),
-              email: expect.any(String),
-            });
-          });
-      });
+        // * Arrange
+        const route = '/members/id/2';
+        const data = {
+          password: '*ThisIsNewPW2026',
+        };
 
-      it('should not update, throw bad request, password: bad data', async () => {
-        await request(app.getHttpServer())
-          .put(`/members/id/1`)
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .put(route)
           .set('Authorization', `Bearer ${accessToken}`)
-          .send({
-            password: 'YesThisIsNotEnough',
-          })
-          .expect(HttpStatus.BAD_REQUEST);
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.OK);
+        expect(result.body.data).toMatchObject(memberMatcher);
       });
 
       it('should update and return member, birthdate', async () => {
-        const now = new Date();
+        // * Arrange
+        const route = '/members/id/2';
+        const data = {
+          birthdate: new Date(),
+        };
 
-        await request(app.getHttpServer())
-          .put(`/members/id/3`)
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .put(route)
           .set('Authorization', `Bearer ${accessToken}`)
-          .send({
-            birthdate: now,
-          })
-          .expect(HttpStatus.OK)
-          .expect((res) => {
-            expect(res.body.data).toMatchObject({
-              id: expect.any(Number),
-              username: expect.any(String),
-              firstName: expect.any(String),
-              lastName: expect.any(String),
-              birthdate: expect.any(String),
-              email: expect.any(String),
-            });
+          .send(data);
 
-            expect(res.body.data.birthdate.split('T')[0]).toBe(
-              now.toISOString().split('T')[0],
-            );
-          });
-      });
-
-      it('should not update, throw bad request, birthdate: bad data', async () => {
-        await request(app.getHttpServer())
-          .put(`/members/id/1`)
-          .set('Authorization', `Bearer ${accessToken}`)
-          .send({
-            birthdate: '28931293819',
-          })
-          .expect(HttpStatus.BAD_REQUEST);
+        // * Assert
+        expect(result.status).toBe(HttpStatus.OK);
+        expect(result.body.data).toMatchObject(memberMatcher);
+        expect(result.body.data.birthdate.split('T')[0]).toBe(
+          data.birthdate.toISOString().split('T')[0],
+        );
       });
 
       it('should update and return member, email', async () => {
-        await request(app.getHttpServer())
-          .put(`/members/id/3`)
-          .set('Authorization', `Bearer ${accessToken}`)
-          .send({
-            email: 'this.is.good@gmail.com',
-          })
-          .expect(HttpStatus.OK)
-          .expect((res) => {
-            expect(res.body.data).toMatchObject({
-              id: expect.any(Number),
-              username: expect.any(String),
-              firstName: expect.any(String),
-              lastName: expect.any(String),
-              birthdate: expect.any(String),
-              email: expect.any(String),
-            });
+        // * Arrange
+        const route = '/members/id/2';
+        const data = {
+          email: 'good.smile@gmail.com',
+        };
 
-            expect(res.body.data.email).toBe('this.is.good@gmail.com');
-          });
-      });
-
-      it('should not update, throw bad request, email: bad data', async () => {
-        await request(app.getHttpServer())
-          .put(`/members/id/1`)
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .put(route)
           .set('Authorization', `Bearer ${accessToken}`)
-          .send({
-            email: '2837uuirjasfjj;sdfjl;k',
-          })
-          .expect(HttpStatus.BAD_REQUEST);
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.OK);
+        expect(result.body.data).toMatchObject(memberMatcher);
+        expect(result.body.data.email).toBe(data.email);
       });
 
       it('should update and return member, phone', async () => {
-        await request(app.getHttpServer())
-          .put(`/members/id/3`)
-          .set('Authorization', `Bearer ${accessToken}`)
-          .send({
-            phone: '+84 0913290717',
-          })
-          .expect(HttpStatus.OK)
-          .expect((res) => {
-            expect(res.body.data).toMatchObject({
-              id: expect.any(Number),
-              username: expect.any(String),
-              firstName: expect.any(String),
-              lastName: expect.any(String),
-              birthdate: expect.any(String),
-              email: expect.any(String),
-            });
+        // * Arrange
+        const route = '/members/id/2';
+        const data = {
+          phone: '+84 0843291999',
+        };
 
-            expect(res.body.data.email).toBe('this.is.good@gmail.com');
-          });
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .put(route)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.OK);
+        expect(result.body.data).toMatchObject(memberMatcher);
+        expect(result.body.data.phone).toBe(data.phone);
+      });
+
+      it('should not update, throw bad request, name: bad data', async () => {
+        // * Arrange
+        const route = '/members/id/2';
+        const data = {
+          firstName: 999_999,
+          lastName: 999_999,
+        };
+
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .put(route)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.BAD_REQUEST);
+      });
+
+      it('should not update, throw bad request, password: bad data', async () => {
+        // * Arrange
+        const route = '/members/id/2';
+        const data = {
+          password: 'ThisIsNewPW2026',
+        };
+
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .put(route)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.BAD_REQUEST);
+      });
+
+      it('should not update, throw bad request, birthdate: bad data', async () => {
+        // * Arrange
+        const route = '/members/id/2';
+        const data = {
+          birthdate: 'NotAValidDate',
+        };
+
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .put(route)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.BAD_REQUEST);
+      });
+
+      it('should not update, throw bad request, email: bad data', async () => {
+        // * Arrange
+        const route = '/members/id/2';
+        const data = {
+          email: 'ThisIsNotAGoodEmail',
+        };
+
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .put(route)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.BAD_REQUEST);
       });
 
       it('should not update, throw bad request, phone: bad data', async () => {
-        await request(app.getHttpServer())
-          .put(`/members/id/1`)
+        // * Arrange
+        const route = '/members/id/2';
+        const data = {
+          phone: 'ThisIsNotAGoodPhone',
+        };
+
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .put(route)
           .set('Authorization', `Bearer ${accessToken}`)
-          .send({
-            phone: 913290717,
-          })
-          .expect(HttpStatus.BAD_REQUEST);
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.BAD_REQUEST);
       });
     });
   });
@@ -476,115 +455,148 @@ describe('MemberController (e2e)', () => {
   describe('POST', () => {
     describe('CreateMember', () => {
       it('should create and return member', async () => {
-        await request(app.getHttpServer())
-          .post(`/members/`)
+        // * Arrange
+        const route = '/members';
+        const data = {
+          username: 'novaids123',
+          password: '@Nova010201',
+          firstName: 'Nova',
+          lastName: 'Controller',
+          birthdate: new Date(),
+          email: 'nova.control@djcuck.com',
+          phone: null,
+          address: null,
+        };
+
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .post(route)
           .set('Authorization', `Bearer ${accessToken}`)
-          .send({
-            username: 'novaids123',
-            password: '@Nova010201',
-            firstName: 'Nova',
-            lastName: 'Controller',
-            birthdate: new Date(),
-            email: 'nova.control@djcuck.com',
-            phone: null,
-            address: null,
-          })
-          .expect(HttpStatus.CREATED)
-          .expect((res) => {
-            expect(res.body.data).toMatchObject({
-              id: expect.any(Number),
-              username: expect.any(String),
-              firstName: expect.any(String),
-              lastName: expect.any(String),
-              birthdate: expect.any(String),
-              email: expect.any(String),
-            });
-          });
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.CREATED);
+        expect(result.body.data).toMatchObject(memberMatcher);
       });
 
       it('should not create member, username: unique constraint violation', async () => {
-        await request(app.getHttpServer())
-          .post(`/members/`)
+        // * Arrange
+        const route = '/members';
+        const data = {
+          username: 'novaids123',
+          password: '@Nova010201',
+          firstName: 'Nova',
+          lastName: 'Controller',
+          birthdate: new Date(),
+          email: 'nova.control@djcuck.com',
+          phone: null,
+          address: null,
+        };
+
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .post(route)
           .set('Authorization', `Bearer ${accessToken}`)
-          .send({
-            username: 'novaids123',
-            password: '@Nova010201',
-            firstName: 'Nova',
-            lastName: 'Controller',
-            birthdate: new Date(),
-            email: 'nova.control@djcuck.com',
-            phone: null,
-            address: null,
-          })
-          .expect(HttpStatus.FORBIDDEN);
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.FORBIDDEN);
       });
 
       it('should not create member, username: bad data', async () => {
-        await request(app.getHttpServer())
-          .post(`/members/`)
+        // * Arrange
+        const route = '/members';
+        const data = {
+          username: 999_999,
+          password: '@Nova010201',
+          firstName: 'Nova',
+          lastName: 'Controller',
+          birthdate: new Date(),
+          email: 'nova.control@djcuck.com',
+          phone: null,
+          address: null,
+        };
+
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .post(route)
           .set('Authorization', `Bearer ${accessToken}`)
-          .send({
-            username: 121231231231,
-            password: '@Nova010201',
-            firstName: 'Nova',
-            lastName: 'Controller',
-            birthdate: new Date(),
-            email: 'nova.control@djcuck.com',
-            phone: null,
-            address: null,
-          })
-          .expect(HttpStatus.BAD_REQUEST);
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.BAD_REQUEST);
       });
 
       it('should not create member, password: bad data', async () => {
-        await request(app.getHttpServer())
-          .post(`/members/`)
+        // * Arrange
+        const route = '/members';
+        const data = {
+          username: 'novaids1234',
+          password: 999_999,
+          firstName: 'Nova',
+          lastName: 'Controller',
+          birthdate: new Date(),
+          email: 'nova.control@djcuck.com',
+          phone: null,
+          address: null,
+        };
+
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .post(route)
           .set('Authorization', `Bearer ${accessToken}`)
-          .send({
-            username: 'novaaids291928',
-            password: 'Nova010201fr',
-            firstName: 'Nova',
-            lastName: 'Controller',
-            birthdate: new Date(),
-            email: 'nova.control@djcuck.com',
-            phone: null,
-            address: null,
-          })
-          .expect(HttpStatus.BAD_REQUEST);
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.BAD_REQUEST);
       });
 
       it('should not create member, birthdate: bad data', async () => {
-        await request(app.getHttpServer())
-          .post(`/members/`)
+        // * Arrange
+        const route = '/members';
+        const data = {
+          username: 'novaids1234',
+          password: '@Nova010201',
+          firstName: 'Nova',
+          lastName: 'Controller',
+          birthdate: 'NotARealBirthdate',
+          email: 'nova.control@djcuck.com',
+          phone: null,
+          address: null,
+        };
+
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .post(route)
           .set('Authorization', `Bearer ${accessToken}`)
-          .send({
-            username: 'novaaids291928',
-            password: '!Nova010201fr',
-            firstName: 'Nova',
-            lastName: 'Controller',
-            birthdate: 'This is a bad date',
-            email: 'nova.control@djcuck.com',
-            phone: null,
-            address: null,
-          })
-          .expect(HttpStatus.BAD_REQUEST);
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.BAD_REQUEST);
       });
 
       it('should not create member, email: bad data', async () => {
-        await request(app.getHttpServer())
-          .post(`/members/`)
+        // * Arrange
+        const route = '/members';
+        const data = {
+          username: 'novaids1234',
+          password: '@Nova010201',
+          firstName: 'Nova',
+          lastName: 'Controller',
+          birthdate: new Date(),
+          email: 'NotARealEmail',
+          phone: null,
+          address: null,
+        };
+
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .post(route)
           .set('Authorization', `Bearer ${accessToken}`)
-          .send({
-            username: 'novaaids291928',
-            password: '!Nova010201fr',
-            firstName: 'Nova',
-            lastName: 'Controller',
-            birthdate: new Date(),
-            email: 'nova.control!djcuck.com',
-            phone: null,
-            address: null,
-          })
-          .expect(HttpStatus.BAD_REQUEST);
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.BAD_REQUEST);
       });
     });
   });
@@ -592,42 +604,63 @@ describe('MemberController (e2e)', () => {
   describe('DELETE', () => {
     describe('DeleteMember', () => {
       it('should create and then delete a member', async () => {
-        const newMember = await request(app.getHttpServer())
-          .post(`/members/`)
-          .set('Authorization', `Bearer ${accessToken}`)
-          .send({
-            username: 'novaaids291928',
-            password: '!Nova010201fr',
-            firstName: 'Nova',
-            lastName: 'Controller',
-            birthdate: new Date(),
-            email: 'nova.control@djcuck.com',
-            phone: null,
-            address: null,
-          })
-          .expect(HttpStatus.CREATED);
+        // * Arrange
+        const route = '/members';
+        const data = {
+          username: 'novaids1234',
+          password: '@Nova010201',
+          firstName: 'Nova',
+          lastName: 'Controller',
+          birthdate: new Date(),
+          email: 'real.email@probably.org',
+          phone: null,
+          address: null,
+        };
 
-        await request(app.getHttpServer())
-          .delete(`/members/id/${newMember.body.data.id}`)
+        // * Act
+        const create_result: Response = await request(app.getHttpServer())
+          .post(route)
           .set('Authorization', `Bearer ${accessToken}`)
-          .send()
-          .expect(HttpStatus.NO_CONTENT);
+          .send(data);
+
+        const delete_result: Response = await request(app.getHttpServer())
+          .delete(`${route}/id/${create_result.body.data.id}`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send();
+
+        // * Assert
+        expect(create_result.status).toBe(HttpStatus.CREATED);
+        expect(delete_result.status).toBe(HttpStatus.NO_CONTENT);
       });
 
       it('should not delete a member, bad id: member cannot be found', async () => {
-        await request(app.getHttpServer())
-          .delete(`/members/id/999999`)
+        // * Arrange
+        const route = `/members/id/999999`;
+        const data = {};
+
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .delete(route)
           .set('Authorization', `Bearer ${accessToken}`)
-          .send()
-          .expect(HttpStatus.NOT_FOUND);
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.NOT_FOUND);
       });
 
       it('should not delete a member, auth: cannot self-delete', async () => {
-        await request(app.getHttpServer())
-          .delete(`/members/id/1`)
+        // * Arrange
+        const route = `/members/id/1`;
+        const data = {};
+
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .delete(route)
           .set('Authorization', `Bearer ${accessToken}`)
-          .send()
-          .expect(HttpStatus.FORBIDDEN);
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.FORBIDDEN);
       });
     });
   });

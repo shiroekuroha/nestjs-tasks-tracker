@@ -12,13 +12,26 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { GetPermissionDto } from '../../role/dto/get-permission.dto';
 
 @Injectable()
-export class TaskGuard implements CanActivate {
+export class TaskGroupGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
     private prisma: PrismaService,
   ) {}
 
-  async getOwnerIdFromTaskGroupId(taskGroupId: number): Promise<number | null> {
+  async getOwnerIdFromProjectId(projectId: number): Promise<number | null> {
+    return (
+      (
+        await this.prisma.project.findUnique({
+          where: { id: projectId },
+          select: {
+            ownerId: true,
+          },
+        })
+      )?.ownerId ?? null
+    );
+  }
+
+  async getOwnerId(taskGroupId: number): Promise<number | null> {
     return (
       (
         await this.prisma.taskGroup.findUnique({
@@ -35,40 +48,58 @@ export class TaskGuard implements CanActivate {
     );
   }
 
-  async getOwnerId(taskId: number): Promise<number | null> {
+  async getPermissionsFromProjectId(
+    projectId: number,
+    memberId: number,
+  ): Promise<GetPermissionDto[]> {
     return (
       (
-        await this.prisma.task.findUnique({
-          where: { id: taskId },
+        await this.prisma.projectMember.findUnique({
+          where: {
+            projectId_memberId: {
+              projectId: projectId,
+              memberId: memberId,
+            },
+          },
           include: {
-            taskGroup: {
+            role: {
               include: {
-                project: {
-                  select: {
-                    ownerId: true,
+                rolePermission: {
+                  include: {
+                    permission: true,
                   },
                 },
               },
             },
           },
         })
-      )?.taskGroup.project.ownerId ?? null
+      )?.role?.rolePermission.map((value) => {
+        const [scope, permission] = value.permission.name.split(':');
+        return plainToInstance(GetPermissionDto, {
+          scope: scope,
+          permission: permission,
+        });
+      }) ?? []
     );
   }
 
-  async getPermissionsFromTaskGroupId(
+  async getPermissions(
     taskGroupId: number,
     memberId: number,
   ): Promise<GetPermissionDto[]> {
     return (
       (
         await this.prisma.taskGroup.findUnique({
-          where: { id: taskGroupId },
+          where: {
+            id: taskGroupId,
+          },
           include: {
             project: {
               include: {
                 projectMember: {
-                  where: { memberId: memberId },
+                  where: {
+                    memberId: memberId,
+                  },
                   include: {
                     role: {
                       include: {
@@ -97,55 +128,10 @@ export class TaskGuard implements CanActivate {
     );
   }
 
-  async getPermissions(
-    taskId: number,
-    memberId: number,
-  ): Promise<GetPermissionDto[]> {
-    return (
-      (
-        await this.prisma.task.findUnique({
-          where: { id: taskId },
-          include: {
-            taskGroup: {
-              include: {
-                project: {
-                  include: {
-                    projectMember: {
-                      where: { memberId: memberId },
-                      include: {
-                        role: {
-                          include: {
-                            rolePermission: {
-                              include: {
-                                permission: true,
-                              },
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        })
-      )?.taskGroup.project.projectMember
-        .at(0)
-        ?.role?.rolePermission.map((value) => {
-          const [scope, permission] = value.permission.name.split(':');
-          return plainToInstance(GetPermissionDto, {
-            scope: scope,
-            permission: permission,
-          });
-        }) ?? []
-    );
-  }
-
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const authId: number = Number(request['user'].sub);
-    const taskId: number = Number(request.params['id']);
+    const taskGroupId: number = Number(request.params['id']);
 
     // * GET
     if (request.method == 'GET') {
@@ -153,20 +139,20 @@ export class TaskGuard implements CanActivate {
     }
 
     // * PUT,  DELETE
-    if (taskId) {
-      const task = await this.prisma.task.findUnique({
+    if (taskGroupId) {
+      const taskGroup = await this.prisma.taskGroup.findUnique({
         where: {
-          id: taskId,
+          id: taskGroupId,
         },
       });
 
-      if (task) {
-        if ((await this.getOwnerId(taskId)) === authId) {
+      if (taskGroup) {
+        if ((await this.getOwnerId(taskGroupId)) === authId) {
           return true;
         }
 
         const permissions: GetPermissionDto[] = await this.getPermissions(
-          taskId,
+          taskGroupId,
           authId,
         );
 
@@ -174,7 +160,8 @@ export class TaskGuard implements CanActivate {
           case 'PUT':
             if (
               permissions.find(
-                (value) => value.scope == 'tasks' && value.action == 'update',
+                (value) =>
+                  value.scope == 'taskGroups' && value.action == 'update',
               )
             )
               return true;
@@ -184,7 +171,8 @@ export class TaskGuard implements CanActivate {
           case 'DELETE':
             if (
               permissions.find(
-                (value) => value.scope == 'tasks' && value.action == 'delete',
+                (value) =>
+                  value.scope == 'taskGroups' && value.action == 'delete',
               )
             )
               return true;
@@ -200,24 +188,24 @@ export class TaskGuard implements CanActivate {
     }
 
     // * POST
-    if (request.method === 'POST' && Number(request.params['taskGroupId'])) {
+    if (request.method === 'POST' && Number(request.params['projectId'])) {
       if (
-        (await this.getOwnerIdFromTaskGroupId(
-          Number(request.params['taskGroupId']),
+        (await this.getOwnerIdFromProjectId(
+          Number(request.params['projectId']),
         )) === authId
       ) {
         return true;
       }
 
       const permissions: GetPermissionDto[] =
-        await this.getPermissionsFromTaskGroupId(
-          Number(request.params['taskGroupId']),
+        await this.getPermissionsFromProjectId(
+          Number(request.params['projectId']),
           authId,
         );
 
       if (
         permissions.find(
-          (value) => value.scope == 'tasks' && value.action == 'create',
+          (value) => value.scope == 'taskGroups' && value.action == 'create',
         )
       )
         return true;

@@ -1,85 +1,114 @@
 import { plainToInstance } from 'class-transformer';
 
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { GetPermissionDto } from '../../role/dto/get-permission.dto';
 
 @Injectable()
 export class ProjectGuard implements CanActivate {
-  constructor(
-    private readonly jwtService: JwtService,
-    private prisma: PrismaService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
-    const payload: { sub: number; username: string } = request['user'];
-    const projectId: number = Number(request.params['id']);
-
-    try {
-      if (request.method == 'POST') return true;
-
-      if (!projectId) return true;
-
-      const memberPermissions: GetPermissionDto[] = plainToInstance(
-        GetPermissionDto,
-        (
-          await this.prisma.projectMember.findFirst({
-            where: {
+  async getPermissions(
+    projectId: number,
+    memberId: number,
+  ): Promise<GetPermissionDto[]> {
+    return (
+      (
+        await this.prisma.projectMember.findUnique({
+          where: {
+            projectId_memberId: {
               projectId: projectId,
-              memberId: payload.sub,
+              memberId: memberId,
             },
-            include: {
-              role: {
-                include: {
-                  rolePermission: {
-                    include: {
-                      permission: true,
-                    },
+          },
+          include: {
+            role: {
+              include: {
+                rolePermission: {
+                  include: {
+                    permission: true,
                   },
                 },
               },
             },
-          })
-        )?.role?.rolePermission.map((pm) => {
-          const [scope, action] = pm.permission.name.split(':');
-          return { scope: scope, action: action };
-        }) ?? [],
-      );
+          },
+        })
+      )?.role?.rolePermission.map((value) => {
+        const [scope, permission] = value.permission.name.split(':');
+        return plainToInstance(GetPermissionDto, {
+          scope: scope,
+          permission: permission,
+        });
+      }) ?? []
+    );
+  }
 
-      switch (request.method) {
-        case 'PUT':
-          if (
-            memberPermissions?.find(
-              (permission: GetPermissionDto) =>
-                permission.scope === 'projects' &&
-                permission.action === 'update',
-            )
-          )
-            return true;
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest();
+    const authId: number = Number(request['user'].sub);
+    const projectId: number = Number(request.params['id']);
 
-          return false;
+    // * GET
+    if (request.method == 'GET') {
+      return true;
+    }
 
-        case 'DELETE':
-          if (
-            memberPermissions?.find(
-              (permission: GetPermissionDto) =>
-                permission.scope === 'projects' &&
-                permission.action === 'delete',
-            )
-          )
-            return true;
+    // * PUT, DELETE
+    if (projectId) {
+      const project = await this.prisma.project.findUnique({
+        where: {
+          id: projectId,
+        },
+      });
 
-          return false;
-        default:
+      if (project) {
+        if (project.ownerId == authId) {
           return true;
-      }
-    } catch (error) {
-      console.log(error);
+        }
 
-      return false;
+        const permissions: GetPermissionDto[] = await this.getPermissions(
+          projectId,
+          authId,
+        );
+
+        switch (request.method) {
+          case 'PUT':
+            if (
+              permissions.find(
+                (value) =>
+                  value.scope === 'projects' && value.action === 'update',
+              )
+            )
+              return true;
+            return false;
+
+          case 'DELETE':
+            if (
+              permissions.find(
+                (value) =>
+                  value.scope === 'projects' && value.action === 'delete',
+              )
+            )
+              return true;
+            return false;
+
+          default:
+            return false;
+            break;
+        }
+      }
+
+      throw new NotFoundException();
+    }
+    // * GETs, POST
+    {
+      return true;
     }
   }
 }

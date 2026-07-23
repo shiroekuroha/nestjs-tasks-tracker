@@ -10,6 +10,7 @@
   },
   "scripts": {
     "prisma:seed": "prisma db seed",
+    "db:test:seed": "tsx prisma/seed.test.ts",
     "prisma:reset": "prisma migrate reset --force --skip-generate",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",

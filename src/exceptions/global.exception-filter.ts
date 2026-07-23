@@ -6,24 +6,29 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
+  constructor(private configService: ConfigService) {}
+
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const res = ctx.getResponse();
     const req = ctx.getRequest();
 
     const logAndThrow = (status: number, msg: string, details: any) => {
-      console.log(
-        `----------------------------------------- Exception Logging Begin -----------------------------------------`,
-      );
-      console.log(exception);
+      if ((this.configService.get<string>('NODE_ENV') ?? 'default') == 'dev') {
+        console.log(
+          `----------------------------------------- Exception Logging Begin -----------------------------------------`,
+        );
+        console.log(exception);
 
-      console.log(
-        `------------------------------------------ Exception Logging End ------------------------------------------`,
-      );
+        console.log(
+          `------------------------------------------ Exception Logging End ------------------------------------------`,
+        );
+      }
 
       res.status(status).json({
         method: req.method,
@@ -35,7 +40,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     };
 
     if (exception instanceof Prisma.PrismaClientValidationError) {
-      throw new BadRequestException({ message: 'Prisma Validation failed!' });
+      throw new BadRequestException({
+        message: 'Prisma Validation failed!',
+      });
     } else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
       const details = {
         version: exception.clientVersion,
@@ -123,14 +130,16 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           ? exception.getResponse()
           : { message: 'Internal server error' };
 
-      console.log(
-        `----------------------------------------- Exception Logging Begin -----------------------------------------`,
-      );
-      console.log(exception);
+      if ((this.configService.get<string>('NODE_ENV') ?? 'default') == 'dev') {
+        console.log(
+          `----------------------------------------- Exception Logging Begin -----------------------------------------`,
+        );
+        console.log(exception);
 
-      console.log(
-        `------------------------------------------ Exception Logging End ------------------------------------------`,
-      );
+        console.log(
+          `------------------------------------------ Exception Logging End ------------------------------------------`,
+        );
+      }
 
       res.status(status).json({
         method: req.method,

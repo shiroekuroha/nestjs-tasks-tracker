@@ -1,42 +1,73 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { plainToInstance } from 'class-transformer';
+
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 
 import { PrismaService } from '../../prisma/prisma.service';
+import { GetPermissionDto } from '../../role/dto/get-permission.dto';
 
 @Injectable()
 export class MemberGuard implements CanActivate {
-  constructor(
-    private readonly jwtService: JwtService,
-    private prisma: PrismaService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
+
+  async getPermissions(
+    projectId: number,
+    memberId: number,
+  ): Promise<GetPermissionDto[]> {
+    return (
+      (
+        await this.prisma.projectMember.findUnique({
+          where: {
+            projectId_memberId: {
+              projectId: projectId,
+              memberId: memberId,
+            },
+          },
+          include: {
+            role: {
+              include: {
+                rolePermission: {
+                  include: {
+                    permission: true,
+                  },
+                },
+              },
+            },
+          },
+        })
+      )?.role?.rolePermission.map((value) => {
+        const [scope, permission] = value.permission.name.split(':');
+        return plainToInstance(GetPermissionDto, {
+          scope: scope,
+          permission: permission,
+        });
+      }) ?? []
+    );
+  }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const payload: { sub: number; username: string } = request['user'];
-    const memberId: number = request.params['id'];
+    const authId: number = Number(request['user'].sub);
+    const memberId: number = Number(request.params['id']);
 
-    try {
-      switch (request.method) {
-        case 'DELETE':
-          if (payload.sub != memberId) return true;
-          return false;
-          break;
-
-        default:
-          return true;
-          break;
-      }
-    } catch (error) {
-      console.log(
-        `------------------------ Guard Error ------------------------`,
-      );
-      console.log(error);
-
-      console.log(
-        `------------------------ Guard Error ------------------------`,
-      );
-
-      return false;
+    // * GET
+    if (request.method == 'GET') {
+      return true;
     }
+
+    // * PUT, DELETE
+    if (memberId) {
+      if (memberId == authId && request.method == 'DELETE') {
+        throw new ForbiddenException('Cannot self-delete');
+      }
+
+      return true;
+    }
+
+    return true;
   }
 }

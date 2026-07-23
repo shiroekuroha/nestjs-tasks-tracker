@@ -2,9 +2,10 @@ import { plainToInstance } from 'class-transformer';
 
 import { BadRequestException, Injectable } from '@nestjs/common';
 
-import { GetMemberDto } from '../member/dto/get-member.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { GetTaskGroupDto } from '../task-group/dto/get-taskGroup.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
+import { GetMemberRoleDto } from './dto/get-member-role.dto';
 import { GetProjectMemberDto } from './dto/get-project-member.dto';
 import { GetProjectWholeDto } from './dto/get-project-whole.dto';
 import { GetProjectDto } from './dto/get-project.dto';
@@ -53,17 +54,16 @@ export class ProjectService {
 
   async createProject(
     data: CreateProjectDto,
-    memberId: number,
+    ownerId: number,
   ): Promise<GetProjectDto> {
     return plainToInstance(
       GetProjectDto,
       await this.prisma.project.create({
         data: {
           ...data,
-          projectMember: {
-            create: {
-              memberId: memberId,
-              roleId: 1,
+          member: {
+            connect: {
+              id: ownerId,
             },
           },
         },
@@ -88,18 +88,7 @@ export class ProjectService {
         include: {
           projectMember: {
             include: {
-              member: {
-                select: {
-                  id: true,
-                  username: true,
-                  firstName: true,
-                  lastName: true,
-                  birthdate: true,
-                  email: true,
-                  phone: true,
-                  address: true,
-                },
-              },
+              member: true,
             },
           },
           taskGroup: {
@@ -108,18 +97,7 @@ export class ProjectService {
                 include: {
                   taskMember: {
                     include: {
-                      member: {
-                        select: {
-                          id: true,
-                          username: true,
-                          firstName: true,
-                          lastName: true,
-                          birthdate: true,
-                          email: true,
-                          phone: true,
-                          address: true,
-                        },
-                      },
+                      member: true,
                     },
                   },
                   attachment: true,
@@ -136,9 +114,9 @@ export class ProjectService {
     );
   }
 
-  async getProjectMembers(id: number): Promise<GetProjectMemberDto[]> {
+  async getProjectMembers(id: number): Promise<GetMemberRoleDto[]> {
     return plainToInstance(
-      GetProjectMemberDto,
+      GetMemberRoleDto,
       (
         await this.prisma.project.findUnique({
           where: {
@@ -148,30 +126,34 @@ export class ProjectService {
             projectMember: {
               include: {
                 member: true,
+                role: {
+                  select: {
+                    name: true,
+                  },
+                },
               },
             },
           },
         })
-      )?.projectMember.map((member) =>
-        plainToInstance(GetMemberDto, member.member, {
-          excludeExtraneousValues: true,
-        }),
-      ) ?? [],
+      )?.projectMember.map((member) => ({
+        member: member.member,
+        role: member.role,
+      })) ?? [],
       { excludeExtraneousValues: true },
     );
   }
 
   async addProjectMember(
-    pid: number,
-    mid: number,
+    id: number,
+    memberId: number,
     roleId: number | null = null,
   ): Promise<GetProjectMemberDto> {
     return plainToInstance(
       GetProjectMemberDto,
       await this.prisma.projectMember.create({
         data: {
-          projectId: pid,
-          memberId: mid,
+          projectId: id,
+          memberId: memberId,
           roleId: roleId,
         },
       }),
@@ -182,7 +164,7 @@ export class ProjectService {
   async reorderTaskGroup(
     id: number,
     data: GetTaskGroupReorderDto,
-  ): Promise<any> {
+  ): Promise<GetTaskGroupDto[]> {
     const taskGroup = await this.prisma.project.findUnique({
       where: { id: Number(id) },
       include: { taskGroup: { select: { id: true, position: true } } },
@@ -199,39 +181,39 @@ export class ProjectService {
         (t) => t.id === data.taskGroupId2,
       )!;
 
-      await this.prisma.$transaction(async (tx) => {
+      return await this.prisma.$transaction(async (tx) => {
         await tx.taskGroup.update({
           where: { id: taskGroup1.id },
           data: { position: -1 },
         });
 
-        await tx.taskGroup.update({
-          where: { id: taskGroup2.id },
-          data: { position: taskGroup1.position },
-        });
+        return [
+          await tx.taskGroup.update({
+            where: { id: taskGroup2.id },
+            data: { position: taskGroup1.position },
+          }),
 
-        await tx.taskGroup.update({
-          where: { id: taskGroup1.id },
-          data: { position: taskGroup2.position },
-        });
+          await tx.taskGroup.update({
+            where: { id: taskGroup1.id },
+            data: { position: taskGroup2.position },
+          }),
+        ];
       });
-
-      return { message: 'Updated successfully!' };
     }
-    throw new BadRequestException('Tasks might not be in TaskGroup.');
+    throw new BadRequestException('Tasks not be in TaskGroup.');
   }
 
   async removeProjectMember(
-    pid: number,
-    mid: number,
+    id: number,
+    memberId: number,
   ): Promise<GetProjectMemberDto> {
     return plainToInstance(
       GetProjectMemberDto,
       await this.prisma.projectMember.delete({
         where: {
           projectId_memberId: {
-            projectId: pid,
-            memberId: mid,
+            projectId: id,
+            memberId: memberId,
           },
         },
       }),
@@ -240,21 +222,21 @@ export class ProjectService {
   }
 
   async changeProjectMemberRole(
-    pid: number,
-    mid: number,
-    rid: number,
+    id: number,
+    memberId: number,
+    roleId: number,
   ): Promise<GetProjectMemberDto> {
     return plainToInstance(
       GetProjectMemberDto,
       await this.prisma.projectMember.update({
         where: {
           projectId_memberId: {
-            projectId: pid,
-            memberId: mid,
+            projectId: id,
+            memberId: memberId,
           },
         },
         data: {
-          roleId: rid,
+          roleId: roleId,
         },
       }),
       { excludeExtraneousValues: true },

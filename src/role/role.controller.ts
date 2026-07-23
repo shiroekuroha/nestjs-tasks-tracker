@@ -1,26 +1,7 @@
-import { plainToInstance } from 'class-transformer';
-
 import {
-  Body,
-  Controller,
-  DefaultValuePipe,
-  Delete,
-  Get,
-  HttpCode,
-  HttpStatus,
-  NotFoundException,
-  Param,
-  ParseIntPipe,
-  Post,
-  Put,
-  Query,
-  UseGuards,
+    Body, Controller, DefaultValuePipe, Delete, Get, HttpCode, HttpStatus, NotFoundException, Param,
+    ParseIntPipe, Post, Put, Query, UseGuards
 } from '@nestjs/common';
-import {
-  ApiNoContentResponse,
-  ApiNotFoundResponse,
-  ApiOkResponse,
-} from '@nestjs/swagger';
 
 import { AuthGuard } from '../security/guards/auth.guard';
 import { CreateRoleDto } from './dto/create-role.dto';
@@ -36,7 +17,6 @@ export class RoleController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ description: 'Roles found.' })
   async getRoles(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
@@ -51,14 +31,15 @@ export class RoleController {
   }> {
     const def_page: number = 1;
     const def_limit: number = 10;
-    const result = await this.roleService.getRoles(
-      (page ?? def_page > 0) ? (page ?? def_page) : def_page,
-      (limit ?? def_limit > 0) ? (limit ?? def_limit) : def_limit,
-    );
+
+    page = (page ?? def_page > 0) ? (page ?? def_page) : def_page;
+    limit = (limit ?? def_limit > 0) ? (limit ?? def_limit) : def_limit;
+
+    const result = await this.roleService.getRoles(page, limit);
     const count = await this.roleService.getRoleCount();
 
     return {
-      data: plainToInstance(GetRoleDto, result),
+      data: result,
       meta: {
         page: (page ?? def_page > 0) ? (page ?? def_page) : def_page,
         item: result.length,
@@ -72,8 +53,6 @@ export class RoleController {
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ description: 'Role found.' })
-  @ApiNotFoundResponse({ description: 'Role not found.' })
   async getRole(@Param('id', ParseIntPipe) id: number): Promise<GetRoleDto> {
     const result = await this.roleService.getRole(id);
 
@@ -84,8 +63,6 @@ export class RoleController {
 
   @Put(':id')
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ description: 'Role updated.' })
-  @ApiNotFoundResponse({ description: 'Role not found.' })
   async updateRole(
     @Param('id', ParseIntPipe) id: number,
     @Body() data: UpdateRoleDto,
@@ -95,21 +72,18 @@ export class RoleController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOkResponse({ description: 'Role created.' })
   async createRole(@Body() data: CreateRoleDto): Promise<GetRoleDto> {
     return await this.roleService.createRole(data);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiNoContentResponse({ description: 'Role deleted.' })
   async deleteRole(@Param('id', ParseIntPipe) id: number): Promise<GetRoleDto> {
     return await this.roleService.deleteRole(id);
   }
 
   @Get(':id/permissions')
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ description: 'Role permissions found.' })
   async getRolePermissions(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<GetPermissionDto[]> {

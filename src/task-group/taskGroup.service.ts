@@ -3,10 +3,10 @@ import { plainToInstance } from 'class-transformer';
 import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateTaskGroupDto } from './dto/create-task-group.dto';
-import { GetTaskGroupDto } from './dto/get-task-group.dto';
+import { CreateTaskGroupDto } from './dto/create-taskGroup.dto';
 import { GetTaskReorderDto } from './dto/get-task-reorder.dto';
-import { UpdateTaskGroupDto } from './dto/update-task-group.dto';
+import { GetTaskGroupDto } from './dto/get-taskGroup.dto';
+import { UpdateTaskGroupDto } from './dto/update-taskGroup.dto';
 
 @Injectable()
 export class TaskGroupService {
@@ -73,7 +73,7 @@ export class TaskGroupService {
               id: projectId,
             },
           },
-          position: (max._max.position ?? -1) + 1,
+          position: (max._max.position ?? 0) + 1,
         },
       });
     });
@@ -140,6 +140,7 @@ export class TaskGroupService {
           },
         });
       }),
+      { excludeExtraneousValues: true },
     );
   }
 

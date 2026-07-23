@@ -1,10 +1,20 @@
 import { Expose, Type } from 'class-transformer';
 import {
-    IsDate, IsEmail, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, Length, Matches, ValidateIf,
-    ValidationArguments
+  IsDate,
+  IsEmail,
+  IsOptional,
+  IsPhoneNumber,
+  IsString,
+  Length,
+  Matches,
+  ValidateIf,
+  ValidationArguments,
 } from 'class-validator';
 
+import { ApiProperty } from '@nestjs/swagger';
+
 export class UpdateMemberDto {
+  @ApiProperty()
   @Expose()
   @ValidateIf((_, value) => value !== undefined)
   @IsString({
@@ -12,21 +22,13 @@ export class UpdateMemberDto {
       `${args.property} must be a string and cannot be null`,
   })
   @Length(8, 50)
-  @Matches(/[!@#$%^&*?:|_\-\+=~`]/, {
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*?:|_\-+=~`]).+$/, {
     message:
-      'password must contain at least one special character(!@#$%^&*?:|_\-\+=~`)',
-  })
-  @Matches(/\d/, {
-    message: 'Password must contain at least one number',
-  })
-  @Matches(/[A-Z]/, {
-    message: 'Password must contain at least one capital letter',
-  })
-  @Matches(/[a-z]/, {
-    message: 'Password must contain at least one non-capital letter',
+      'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
   })
   password?: string;
 
+  @ApiProperty()
   @Expose()
   @ValidateIf((_, value) => value !== undefined)
   @IsString({
@@ -36,6 +38,7 @@ export class UpdateMemberDto {
   @Length(2, 25)
   firstName?: string;
 
+  @ApiProperty()
   @Expose()
   @ValidateIf((_, value) => value !== undefined)
   @IsString({
@@ -45,6 +48,7 @@ export class UpdateMemberDto {
   @Length(2, 25)
   lastName?: string;
 
+  @ApiProperty()
   @Expose()
   @ValidateIf((_, value) => value !== undefined)
   @Type(() => Date)
@@ -54,9 +58,9 @@ export class UpdateMemberDto {
   })
   birthdate?: Date;
 
+  @ApiProperty()
   @Expose()
   @ValidateIf((_, value) => value !== undefined)
-  @IsNotEmpty()
   @IsString({
     message: (args: ValidationArguments) =>
       `${args.property} must be a string and cannot be null`,
@@ -64,22 +68,14 @@ export class UpdateMemberDto {
   @IsEmail()
   email?: string;
 
+  @ApiProperty()
   @Expose()
-  @IsOptional()
-  @IsNotEmpty()
-  @IsString({
-    message: (args: ValidationArguments) =>
-      `${args.property} must be a string or null`,
-  })
+  @ValidateIf((_, value) => value)
   @IsPhoneNumber()
   phone?: string;
 
+  @ApiProperty()
   @Expose()
   @IsOptional()
-  @IsNotEmpty()
-  @IsString({
-    message: (args: ValidationArguments) =>
-      `${args.property} must be a string or null`,
-  })
   address?: string;
 }

@@ -33,7 +33,8 @@ export class MemberService {
   }
 
   async getMemberProjectsById(id: number): Promise<GetProjectDto[]> {
-    return (
+    return plainToInstance(
+      GetProjectDto,
       (
         await this.prisma.member.findUnique({
           where: {
@@ -48,14 +49,16 @@ export class MemberService {
             },
           },
         })
-      )?.projectMembers.map((value) => value.project) ?? []
+      )?.projectMembers.map((value) => value.project) ?? [],
+      { excludeExtraneousValues: true },
     );
   }
 
   async getMemberProjectsByUsername(
     username: string,
   ): Promise<GetProjectDto[]> {
-    return (
+    return plainToInstance(
+      GetProjectDto,
       (
         await this.prisma.member.findFirst({
           where: {
@@ -70,7 +73,8 @@ export class MemberService {
             },
           },
         })
-      )?.projectMembers.map((value) => value.project) ?? []
+      )?.projectMembers.map((value) => value.project) ?? [],
+      { excludeExtraneousValues: true },
     );
   }
 
@@ -155,6 +159,20 @@ export class MemberService {
   }
 
   async restoreMember(id: number): Promise<GetMemberDto> {
+    const targetUsername = (
+      await this.prisma.member.findUnique({ where: { id: id } })
+    )?.username;
+
+    const activeRelated = await this.prisma.member.findMany({
+      where: { username: targetUsername, active: true },
+    });
+
+    if (activeRelated.length != 0) {
+      throw new ForbiddenException(
+        'An account with that username is still active!',
+      );
+    }
+
     return plainToInstance(
       GetMemberDto,
       await this.prisma.member.update({

@@ -24,6 +24,9 @@ export class AuthService {
             id: (await this.jwtService.verifyAsync(access_token)).sub,
           },
         }),
+        {
+          excludeExtraneousValues: true,
+        },
       );
     } catch {
       throw new UnauthorizedException();

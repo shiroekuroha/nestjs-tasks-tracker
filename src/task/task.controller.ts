@@ -1,5 +1,3 @@
-import { plainToInstance } from 'class-transformer';
-
 import {
   Body,
   Controller,
@@ -16,11 +14,6 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiNoContentResponse,
-  ApiNotFoundResponse,
-  ApiOkResponse,
-} from '@nestjs/swagger';
 
 import { AuthGuard } from '../security/guards/auth.guard';
 import { TaskGuard } from '../security/guards/task.guard';
@@ -40,7 +33,6 @@ export class TaskController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ description: 'Tasks found.' })
   async getTasks(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
@@ -55,14 +47,15 @@ export class TaskController {
   }> {
     const def_page: number = 1;
     const def_limit: number = 10;
-    const result = await this.taskService.getTasks(
-      (page ?? def_page > 0) ? (page ?? def_page) : def_page,
-      (limit ?? def_limit > 0) ? (limit ?? def_limit) : def_limit,
-    );
+
+    page = (page ?? def_page > 0) ? (page ?? def_page) : def_page;
+    limit = (limit ?? def_limit > 0) ? (limit ?? def_limit) : def_limit;
+
+    const result = await this.taskService.getTasks(page, limit);
     const count = await this.taskService.getTaskCount();
 
     return {
-      data: plainToInstance(GetTaskDto, result),
+      data: result,
       meta: {
         page: (page ?? def_page > 0) ? (page ?? def_page) : def_page,
         item: result.length,
@@ -76,8 +69,6 @@ export class TaskController {
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ description: 'Task found.' })
-  @ApiNotFoundResponse({ description: 'Task not found.' })
   async getTask(@Param('id', ParseIntPipe) id: number): Promise<GetTaskDto> {
     const result = await this.taskService.getTask(id);
 
@@ -88,8 +79,6 @@ export class TaskController {
 
   @Put(':id')
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ description: 'Task updated.' })
-  @ApiNotFoundResponse({ description: 'Task not found.' })
   async updateTask(
     @Param('id', ParseIntPipe) id: number,
     @Body() data: UpdateTaskDto,
@@ -99,8 +88,6 @@ export class TaskController {
 
   @Put(':id/:taskGroupId')
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ description: 'Task updated.' })
-  @ApiNotFoundResponse({ description: 'Task not found.' })
   async relinkTask(
     @Param('id', ParseIntPipe) id: number,
     @Param('taskGroupId', ParseIntPipe) taskGroupId: number,
@@ -110,7 +97,6 @@ export class TaskController {
 
   @Post(':taskGroupId')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOkResponse({ description: 'Task created.' })
   async createTask(
     @Body() data: CreateTaskDto,
     @Param('taskGroupId', ParseIntPipe) taskGroupId: number,
@@ -120,15 +106,13 @@ export class TaskController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiNoContentResponse({ description: 'Task deleted.' })
   async deleteTask(@Param('id', ParseIntPipe) id: number): Promise<GetTaskDto> {
-    return await this.taskService.deleteTask(id);
+    return this.taskService.deleteTask(id);
   }
 
   @Post('attachments/:id')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOkResponse({ description: 'Attachment created.' })
-  async addAttachment(
+  async createAttachment(
     @Param('id', ParseIntPipe) id: number,
     @Body() data: CreateAttachmentDto,
   ): Promise<GetAttachmentDto> {
@@ -137,8 +121,7 @@ export class TaskController {
 
   @Delete('attachments/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiNoContentResponse({ description: 'Attachment deleted.' })
-  async removeAttachment(
+  async deleteAttachment(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<GetAttachmentDto> {
     return await this.taskService.removeAttachment(id);
@@ -146,8 +129,7 @@ export class TaskController {
 
   @Post('checklists/:id')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOkResponse({ description: 'Checklist created.' })
-  async addChecklist(
+  async createChecklist(
     @Param('id', ParseIntPipe) id: number,
     @Body() data: CreateCheckListDto,
   ): Promise<GetChecklistDto> {
@@ -156,8 +138,7 @@ export class TaskController {
 
   @Delete('checklists/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiNoContentResponse({ description: 'Checklist deleted.' })
-  async removeChecklist(
+  async deleteChecklist(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<GetChecklistDto> {
     return await this.taskService.removeCheckList(id);

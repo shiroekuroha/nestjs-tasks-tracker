@@ -12,7 +12,7 @@ export default async () => {
     env: process.env,
   });
 
-  execSync('npx prisma db seed', {
+  execSync('npm run db:test:seed', {
     stdio: 'inherit',
     env: {
       ...process.env,

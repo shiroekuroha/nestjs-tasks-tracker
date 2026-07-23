@@ -1,10 +1,20 @@
 import {
-    Body, Controller, DefaultValuePipe, Delete, Get, HttpCode, HttpStatus, NotFoundException, Param,
-    ParseIntPipe, Post, Put, Query, UseGuards
+  Body,
+  Controller,
+  DefaultValuePipe,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  NotFoundException,
+  Param,
+  ParseIntPipe,
+  Post,
+  Put,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
-import {
-    ApiCreatedResponse, ApiNoContentResponse, ApiNotFoundResponse, ApiOkResponse
-} from '@nestjs/swagger';
+import { ApiCreatedResponse } from '@nestjs/swagger';
 
 import { GetProjectDto } from '../project/dto/get-project.dto';
 import { AuthGuard } from '../security/guards/auth.guard';
@@ -21,9 +31,6 @@ export class MemberController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({
-    description: 'Members found.',
-  })
   async getMembers(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
@@ -38,10 +45,11 @@ export class MemberController {
   }> {
     const def_page: number = 1;
     const def_limit: number = 10;
-    const result = await this.memberService.getMembers(
-      (page ?? def_page > 0) ? (page ?? def_page) : def_page,
-      (limit ?? def_limit > 0) ? (limit ?? def_limit) : def_limit,
-    );
+
+    page = (page ?? def_page > 0) ? (page ?? def_page) : def_page;
+    limit = (limit ?? def_limit > 0) ? (limit ?? def_limit) : def_limit;
+
+    const result = await this.memberService.getMembers(page, limit);
     const count = await this.memberService.getMemberCount();
 
     return {
@@ -59,8 +67,6 @@ export class MemberController {
 
   @Get('id/:id')
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ description: 'Member found.' })
-  @ApiNotFoundResponse({ description: 'Member not found.' })
   async getMemberById(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<GetMemberDto> {
@@ -73,8 +79,6 @@ export class MemberController {
 
   @Get('username/:username')
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ description: 'Member found.' })
-  @ApiNotFoundResponse({ description: 'Member not found.' })
   async getMemberByUsername(
     @Param('username') username: string,
   ): Promise<GetMemberDto> {
@@ -87,8 +91,6 @@ export class MemberController {
 
   @Get('id/:id/projects')
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ description: 'Member found.' })
-  @ApiNotFoundResponse({ description: 'Member not found.' })
   async getMemberProjectsById(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<GetProjectDto[]> {
@@ -97,8 +99,6 @@ export class MemberController {
 
   @Get('username/:username/projects')
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ description: 'Member found.' })
-  @ApiNotFoundResponse({ description: 'Member not found.' })
   async getMemberProjectsByUsername(
     @Param('username') username: string,
   ): Promise<GetProjectDto[]> {
@@ -107,7 +107,6 @@ export class MemberController {
 
   @Put('id/:id')
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ description: 'Member updated.' })
   async updateMemberById(
     @Param('id', ParseIntPipe) id: number,
     @Body() data: UpdateMemberDto,
@@ -117,7 +116,6 @@ export class MemberController {
 
   @Put('username/:username')
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ description: 'Member updated.' })
   async updateMemberByUsername(
     @Param('username') username: string,
     @Body() data: UpdateMemberDto,
@@ -143,18 +141,18 @@ export class MemberController {
 
   @Delete('id/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiNoContentResponse({ description: 'Member deleted.' })
   async deleteMemberById(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIntPipe)
+    id: number,
   ): Promise<GetMemberDto> {
     return await this.memberService.deleteMemberById(id);
   }
 
   @Delete('username/:username')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiNoContentResponse({ description: 'Member deleted.' })
   async deleteMemberByUsername(
-    @Param('username') username: string,
+    @Param('id')
+    username: string,
   ): Promise<GetMemberDto> {
     return await this.memberService.deleteMemberByUsername(username);
   }

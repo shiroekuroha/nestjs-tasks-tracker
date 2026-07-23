@@ -4,14 +4,16 @@ import { HttpStatus, INestApplication } from '@nestjs/common';
 
 import { createTestApp } from '../../test/test.app';
 
-describe('ProjectController (e2e)', () => {
+describe('TaskGroupController (e2e)', () => {
   let app: INestApplication;
   let accessToken = '';
 
-  const projectMatcher = {
+  const taskGroupMatcher = {
     id: expect.any(Number),
     name: expect.any(String),
-    ownerId: expect.any(Number),
+    color: expect.any(String),
+    position: expect.any(Number),
+    projectId: expect.any(Number),
   };
 
   const paginationMatcher = {
@@ -32,10 +34,10 @@ describe('ProjectController (e2e)', () => {
   });
 
   describe('GET', () => {
-    describe('GetProjects', () => {
-      it('should return all projects', async () => {
+    describe('GetTaskGroups', () => {
+      it('should return all taskGroups', async () => {
         // * Arrange
-        const route = `/projects`;
+        const route = `/taskGroups`;
         const data = {};
 
         // * Act
@@ -47,16 +49,16 @@ describe('ProjectController (e2e)', () => {
         // * Assert
         expect(result.status).toBe(HttpStatus.OK);
 
-        result.body.data.forEach((project) => {
-          expect(project).toMatchObject(projectMatcher);
+        result.body.data.forEach((taskGroup) => {
+          expect(taskGroup).toMatchObject(taskGroupMatcher);
         });
 
         expect(result.body.meta).toMatchObject(paginationMatcher);
       });
 
-      it('should return partial projects, changed limit', async () => {
+      it('should return partial taskGroups, changed limit', async () => {
         // * Arrange
-        const route = `/projects?limit=1`;
+        const route = `/taskGroups?limit=1`;
         const data = {};
 
         // * Act
@@ -68,16 +70,16 @@ describe('ProjectController (e2e)', () => {
         // * Assert
         expect(result.status).toBe(HttpStatus.OK);
 
-        result.body.data.forEach((project) => {
-          expect(project).toMatchObject(projectMatcher);
+        result.body.data.forEach((taskGroup) => {
+          expect(taskGroup).toMatchObject(taskGroupMatcher);
         });
 
         expect(result.body.meta).toMatchObject(paginationMatcher);
       });
 
-      it('should return partial projects, even if limit is higher than total', async () => {
+      it('should return partial taskGroups, even if limit is higher than total', async () => {
         // * Arrange
-        const route = `/projects?limit=999`;
+        const route = `/taskGroups?limit=999999`;
         const data = {};
 
         // * Act
@@ -89,16 +91,16 @@ describe('ProjectController (e2e)', () => {
         // * Assert
         expect(result.status).toBe(HttpStatus.OK);
 
-        result.body.data.forEach((project) => {
-          expect(project).toMatchObject(projectMatcher);
+        result.body.data.forEach((taskGroup) => {
+          expect(taskGroup).toMatchObject(taskGroupMatcher);
         });
 
         expect(result.body.meta).toMatchObject(paginationMatcher);
       });
 
-      it('should return partial projects, even if limit is 0', async () => {
+      it('should return partial taskGroups, even if limit is 0', async () => {
         // * Arrange
-        const route = `/projects?limit=0`;
+        const route = `/taskGroups?limit=0`;
         const data = {};
 
         // * Act
@@ -110,16 +112,16 @@ describe('ProjectController (e2e)', () => {
         // * Assert
         expect(result.status).toBe(HttpStatus.OK);
 
-        result.body.data.forEach((project) => {
-          expect(project).toMatchObject(projectMatcher);
+        result.body.data.forEach((taskGroup) => {
+          expect(taskGroup).toMatchObject(taskGroupMatcher);
         });
 
         expect(result.body.meta).toMatchObject(paginationMatcher);
       });
 
-      it('should return partial projects, changed page', async () => {
+      it('should return partial taskGroups, changed page', async () => {
         // * Arrange
-        const route = `/projects?limit=1&page=2`;
+        const route = `/taskGroups?limit=1&page=2`;
         const data = {};
 
         // * Act
@@ -131,16 +133,16 @@ describe('ProjectController (e2e)', () => {
         // * Assert
         expect(result.status).toBe(HttpStatus.OK);
 
-        result.body.data.forEach((project) => {
-          expect(project).toMatchObject(projectMatcher);
+        result.body.data.forEach((taskGroup) => {
+          expect(taskGroup).toMatchObject(taskGroupMatcher);
         });
 
         expect(result.body.meta).toMatchObject(paginationMatcher);
       });
 
-      it('should return partial projects, even if page is higher than total', async () => {
+      it('should return partial taskGroups, even if page is higher than total', async () => {
         // * Arrange
-        const route = `/projects?limit=1&page=999999`;
+        const route = `/taskGroups?limit=1&page=999999`;
         const data = {};
 
         // * Act
@@ -152,16 +154,16 @@ describe('ProjectController (e2e)', () => {
         // * Assert
         expect(result.status).toBe(HttpStatus.OK);
 
-        result.body.data.forEach((project) => {
-          expect(project).toMatchObject(projectMatcher);
+        result.body.data.forEach((taskGroup) => {
+          expect(taskGroup).toMatchObject(taskGroupMatcher);
         });
 
         expect(result.body.meta).toMatchObject(paginationMatcher);
       });
 
-      it('should return partial projects, even if page is 0', async () => {
+      it('should return partial taskGroups, even if page is 0', async () => {
         // * Arrange
-        const route = `/projects?limit=1&page=0`;
+        const route = `/taskGroups?limit=1&page=0`;
         const data = {};
 
         // * Act
@@ -173,18 +175,18 @@ describe('ProjectController (e2e)', () => {
         // * Assert
         expect(result.status).toBe(HttpStatus.OK);
 
-        result.body.data.forEach((project) => {
-          expect(project).toMatchObject(projectMatcher);
+        result.body.data.forEach((taskGroup) => {
+          expect(taskGroup).toMatchObject(taskGroupMatcher);
         });
 
         expect(result.body.meta).toMatchObject(paginationMatcher);
       });
     });
 
-    describe('GetProject', () => {
-      it('should return a project', async () => {
+    describe('GetTaskGroup', () => {
+      it('should return a taskGroup', async () => {
         // * Arrange
-        const route = `/projects/1`;
+        const route = `/taskGroups/1`;
         const data = {};
 
         // * Act
@@ -195,12 +197,12 @@ describe('ProjectController (e2e)', () => {
 
         // * Assert
         expect(result.status).toBe(HttpStatus.OK);
-        expect(result.body.data).toMatchObject(projectMatcher);
+        expect(result.body.data).toMatchObject(taskGroupMatcher);
       });
 
-      it('should return NOT_FOUND for accessing project with invalid id, out of range', async () => {
+      it('should return NOT_FOUND for accessing taskGroup with invalid id, out of range', async () => {
         // * Arrange
-        const route = `/projects/999999`;
+        const route = `/taskGroups/999999`;
         const data = {};
 
         // * Act
@@ -213,9 +215,9 @@ describe('ProjectController (e2e)', () => {
         expect(result.status).toBe(HttpStatus.NOT_FOUND);
       });
 
-      it('should return BAD_REQUEST for accessing project with invalid id, wrong data type', async () => {
+      it('should return BAD_REQUEST for accessing taskGroup with invalid id, wrong data type', async () => {
         // * Arrange
-        const route = `/projects/BadId`;
+        const route = `/taskGroups/BadId`;
         const data = {};
 
         // * Act
@@ -231,12 +233,12 @@ describe('ProjectController (e2e)', () => {
   });
 
   describe('PUT', () => {
-    describe('UpdateProject', () => {
-      it('should update and return project, name', async () => {
+    describe('UpdateTaskGroup', () => {
+      it('should update and return taskGroup, name', async () => {
         // * Arrange
-        const route = `/projects/1`;
+        const route = `/taskGroups/2`;
         const data = {
-          name: 'Chromos',
+          name: 'Week 999',
         };
 
         // * Act
@@ -247,14 +249,66 @@ describe('ProjectController (e2e)', () => {
 
         // * Assert
         expect(result.status).toBe(HttpStatus.OK);
-        expect(result.body.data).toMatchObject(projectMatcher);
+        expect(result.body.data.name).toBe(data.name);
+      });
+
+      it('should update and return taskGroup, color', async () => {
+        // * Arrange
+        const route = `/taskGroups/2`;
+        const data = {
+          color: '#a3a33d',
+        };
+
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .put(route)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.OK);
+        expect(result.body.data.color).toBe(data.color);
       });
 
       it('should not update, throw bad request, name: bad data', async () => {
         // * Arrange
-        const route = `/projects/1`;
+        const route = `/taskGroups/2`;
         const data = {
-          name: 999_999,
+          name: 999999,
+        };
+
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .put(route)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.BAD_REQUEST);
+      });
+
+      it('should not update, throw bad request, name: unique constraint violation', async () => {
+        // * Arrange
+        const route = `/taskGroups/2`;
+        const data = {
+          name: 'Week 1',
+        };
+
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .put(route)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.BAD_REQUEST);
+      });
+
+      it('should not update and return taskGroup, color: bad data', async () => {
+        // * Arrange
+        const route = `/taskGroups/2`;
+        const data = {
+          color: 'ThisIsABadColor',
         };
 
         // * Act
@@ -270,12 +324,13 @@ describe('ProjectController (e2e)', () => {
   });
 
   describe('POST', () => {
-    describe('CreateProject', () => {
-      it('should create a project', async () => {
+    describe('CreateTaskGroup', () => {
+      it('should create a taskGroup', async () => {
         // * Arrange
-        const route = `/projects/1`;
+        const route = `/taskGroups/1`;
         const data = {
-          name: 'Noon',
+          name: 'Extras',
+          color: '#a81892',
         };
 
         // * Act
@@ -286,15 +341,51 @@ describe('ProjectController (e2e)', () => {
 
         // * Assert
         expect(result.status).toBe(HttpStatus.CREATED);
-        expect(result.body.data).toMatchObject(projectMatcher);
+        expect(result.body.data).toMatchObject(taskGroupMatcher);
       });
 
-      it('should not create a project, bad name: bad data', async () => {
+      it('should not create a taskGroup, bad name: bad data', async () => {
         // * Arrange
-        const route = `/projects/1`;
+        const route = `/taskGroups/1`;
         const data = {
-          name: 999_999,
-          ownerId: 1,
+          name: 999999,
+          color: '#a81892',
+        };
+
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .post(route)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.BAD_REQUEST);
+      });
+
+      it('should not create a taskGroup, bad name: unique constraint violation', async () => {
+        // * Arrange
+        const route = `/taskGroups/1`;
+        const data = {
+          name: 'Week 1',
+          color: '#a81892',
+        };
+
+        // * Act
+        const result: Response = await request(app.getHttpServer())
+          .post(route)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send(data);
+
+        // * Assert
+        expect(result.status).toBe(HttpStatus.BAD_REQUEST);
+      });
+
+      it('should not create a taskGroup, bad color', async () => {
+        // * Arrange
+        const route = `/taskGroups/1`;
+        const data = {
+          name: 'Extras 2',
+          color: 'ThisIsABadColor',
         };
 
         // * Act
@@ -310,12 +401,13 @@ describe('ProjectController (e2e)', () => {
   });
 
   describe('DELETE', () => {
-    describe('DeleteProject', () => {
-      it('should create and then delete a project', async () => {
+    describe('DeleteTaskGroup', () => {
+      it('should create and then delete a taskGroup', async () => {
         // * Arrange
-        const route = '/projects';
+        const route = `/taskGroups`;
         const data = {
-          name: 'Roans',
+          name: 'Extras 3',
+          color: '#a81892',
         };
 
         // * Act
@@ -334,19 +426,19 @@ describe('ProjectController (e2e)', () => {
         expect(delete_result.status).toBe(HttpStatus.NO_CONTENT);
       });
 
-      it('should not delete a project, bad id: no permission to delete', async () => {
+      it('should not delete a taskGroup, bad id: no permission to delete', async () => {
         // * Arrange
-        const route = '/projects/999999';
+        const route = `/taskGroups/999999`;
         const data = {};
 
         // * Act
         const result: Response = await request(app.getHttpServer())
-          .post(route)
+          .delete(route)
           .set('Authorization', `Bearer ${accessToken}`)
-          .send(data);
+          .send();
 
         // * Assert
-        expect(result.status).toBe(HttpStatus.BAD_REQUEST);
+        expect(result.status).toBe(HttpStatus.NOT_FOUND);
       });
     });
   });

@@ -1,5 +1,3 @@
-import { plainToInstance } from 'class-transformer';
-
 import {
   Body,
   Controller,
@@ -16,16 +14,13 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiNoContentResponse,
-  ApiNotFoundResponse,
-  ApiOkResponse,
-} from '@nestjs/swagger';
 
 import { AuthGuard } from '../security/guards/auth.guard';
 import { ProjectMemberGuard } from '../security/guards/project-member.guard';
 import { ProjectGuard } from '../security/guards/project.guard';
+import { GetTaskGroupDto } from '../task-group/dto/get-taskGroup.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
+import { GetMemberRoleDto } from './dto/get-member-role.dto';
 import { GetProjectMemberDto } from './dto/get-project-member.dto';
 import { GetProjectWholeDto } from './dto/get-project-whole.dto';
 import { GetProjectDto } from './dto/get-project.dto';
@@ -34,15 +29,13 @@ import { GetTaskGroupReorderDto } from './dto/update-taskGroup-reorder.dto';
 import { ProjectService } from './project.service';
 
 @Controller('projects')
-@UseGuards(AuthGuard, ProjectGuard)
+@UseGuards(AuthGuard)
 export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
   @Get()
+  @UseGuards(ProjectGuard)
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({
-    description: 'Projects found.',
-  })
   async getProjects(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
@@ -57,14 +50,15 @@ export class ProjectController {
   }> {
     const def_page: number = 1;
     const def_limit: number = 10;
-    const result = await this.projectService.getProjects(
-      (page ?? def_page > 0) ? (page ?? def_page) : def_page,
-      (limit ?? def_limit > 0) ? (limit ?? def_limit) : def_limit,
-    );
+
+    page = (page ?? def_page > 0) ? (page ?? def_page) : def_page;
+    limit = (limit ?? def_limit > 0) ? (limit ?? def_limit) : def_limit;
+
+    const result = await this.projectService.getProjects(page, limit);
     const count = await this.projectService.getProjectCount();
 
     return {
-      data: plainToInstance(GetProjectDto, result),
+      data: result,
       meta: {
         page: (page ?? def_page > 0) ? (page ?? def_page) : def_page,
         item: result.length,
@@ -77,13 +71,8 @@ export class ProjectController {
   }
 
   @Get(':id')
+  @UseGuards(ProjectGuard)
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({
-    description: 'Project found.',
-  })
-  @ApiNotFoundResponse({
-    description: 'Project not found.',
-  })
   async getProject(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<GetProjectDto> {
@@ -95,13 +84,8 @@ export class ProjectController {
   }
 
   @Put(':id')
+  @UseGuards(ProjectGuard)
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({
-    description: 'Project updated.',
-  })
-  @ApiNotFoundResponse({
-    description: 'Project not found.',
-  })
   async updateProject(
     @Param('id', ParseIntPipe) id: number,
     @Body() data: UpdateProjectDto,
@@ -109,23 +93,19 @@ export class ProjectController {
     return await this.projectService.updateProject(id, data);
   }
 
-  @Post(':memberId')
+  @Post(':ownerId')
+  @UseGuards(ProjectGuard)
   @HttpCode(HttpStatus.CREATED)
-  @ApiOkResponse({
-    description: 'Project created.',
-  })
   async createProject(
     @Body() data: CreateProjectDto,
-    @Param('memberId', ParseIntPipe) memberId: number,
+    @Param('ownerId', ParseIntPipe) ownerId: number,
   ): Promise<GetProjectDto> {
-    return await this.projectService.createProject(data, memberId);
+    return await this.projectService.createProject(data, ownerId);
   }
 
   @Delete(':id')
+  @UseGuards(ProjectGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiNoContentResponse({
-    description: 'Project deleted.',
-  })
   async deleteProject(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<GetProjectDto> {
@@ -133,25 +113,18 @@ export class ProjectController {
   }
 
   @Put(':id/reorder')
+  @UseGuards(ProjectGuard)
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({
-    description: 'Project updated.',
-  })
-  @ApiNotFoundResponse({
-    description: 'Project not found.',
-  })
   async reorderProject(
     @Param('id', ParseIntPipe) id: number,
     @Body() data: GetTaskGroupReorderDto,
-  ): Promise<GetProjectDto> {
+  ): Promise<GetTaskGroupDto[]> {
     return await this.projectService.reorderTaskGroup(id, data);
   }
 
   @Get(':id/whole')
+  @UseGuards(ProjectGuard)
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({
-    description: 'Project found.',
-  })
   async getProjectWhole(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<GetProjectWholeDto> {
@@ -169,29 +142,23 @@ export class ProjectController {
   @Get(':id/members')
   @UseGuards(ProjectMemberGuard)
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({
-    description: 'Project members found.',
-  })
   async getProjectMembers(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<GetProjectMemberDto[]> {
+  ): Promise<GetMemberRoleDto[]> {
     return await this.projectService.getProjectMembers(id);
   }
 
   @Post(':id/members/:memberId')
   @UseGuards(ProjectMemberGuard)
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOkResponse({
-    description: 'Project member added.',
-  })
+  @HttpCode(HttpStatus.OK)
   async addProjectMember(
-    @Param('id', ParseIntPipe) pid: number,
-    @Param('memberId', ParseIntPipe) mid: number,
+    @Param('id', ParseIntPipe) id: number,
+    @Param('memberId', ParseIntPipe) memberId: number,
     @Query('roleId', new ParseIntPipe({ optional: true })) role_id: number,
   ): Promise<GetProjectMemberDto> {
     return await this.projectService.addProjectMember(
-      pid,
-      mid,
+      id,
+      memberId,
       role_id ?? null,
     );
   }
@@ -199,27 +166,25 @@ export class ProjectController {
   @Delete(':id/members/:memberId')
   @UseGuards(ProjectMemberGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiNoContentResponse({
-    description: 'Project member removed.',
-  })
   async removeProjectMember(
-    @Param('id', ParseIntPipe) pid: number,
-    @Param('memberId', ParseIntPipe) mid: number,
+    @Param('id', ParseIntPipe) id: number,
+    @Param('memberId', ParseIntPipe) memberId: number,
   ): Promise<GetProjectMemberDto> {
-    return await this.projectService.removeProjectMember(pid, mid);
+    return await this.projectService.removeProjectMember(id, memberId);
   }
 
-  @Put(':id/members/:mid/role/:rid')
+  @Put(':id/members/:memberId/role/:roleId')
   @UseGuards(ProjectMemberGuard)
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({
-    description: 'Project members role changed.',
-  })
   async changeProjectMemberRole(
-    @Param('id', ParseIntPipe) pid: number,
-    @Param('mid', ParseIntPipe) mid: number,
-    @Param('rid', ParseIntPipe) rid: number,
+    @Param('id', ParseIntPipe) id: number,
+    @Param('memberId', ParseIntPipe) memberId: number,
+    @Param('roleId', ParseIntPipe) roleId: number,
   ): Promise<GetProjectMemberDto> {
-    return await this.projectService.changeProjectMemberRole(pid, mid, rid);
+    return await this.projectService.changeProjectMemberRole(
+      id,
+      memberId,
+      roleId,
+    );
   }
 }

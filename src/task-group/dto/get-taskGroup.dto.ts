@@ -1,13 +1,13 @@
 import { Expose } from 'class-transformer';
-import { IsNumber, IsString } from 'class-validator';
+import { IsNumber, IsString, IsUUID } from 'class-validator';
 
 import { ApiProperty } from '@nestjs/swagger';
 
 export class GetTaskGroupDto {
   @ApiProperty()
   @Expose()
-  @IsNumber()
-  id!: number;
+  @IsUUID()
+  id!: string;
 
   @ApiProperty()
   @Expose()
@@ -26,6 +26,6 @@ export class GetTaskGroupDto {
 
   @ApiProperty()
   @Expose()
-  @IsNumber()
-  projectId!: number;
+  @IsUUID()
+  projectId!: string;
 }

@@ -1,16 +1,16 @@
 import { Expose } from 'class-transformer';
-import { IsNumber } from 'class-validator';
+import { IsUUID } from 'class-validator';
 
 import { ApiProperty } from '@nestjs/swagger';
 
 export class GetTaskReorderDto {
   @ApiProperty()
   @Expose()
-  @IsNumber()
-  taskId1!: number;
+  @IsUUID()
+  taskId1!: string;
 
   @ApiProperty()
   @Expose()
-  @IsNumber()
-  taskId2!: number;
+  @IsUUID()
+  taskId2!: string;
 }

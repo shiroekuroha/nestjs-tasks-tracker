@@ -22,7 +22,7 @@ export class WrappersInterceptor implements NestInterceptor {
           data = {
             method: req.method,
             route: req.originalUrl,
-            status: Number(res.statusCode),
+            status: res.statusCode,
             success: true,
             data: data.data ?? data,
             meta: {
@@ -33,7 +33,7 @@ export class WrappersInterceptor implements NestInterceptor {
           data = {
             method: req.method,
             route: req.originalUrl,
-            status: Number(res.statusCode),
+            status: res.statusCode,
             success: false,
             error: catchError((error) => error),
             meta: {},

@@ -1,12 +1,12 @@
 import { Expose } from 'class-transformer';
-import { IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsDate, IsOptional, IsString, IsUUID } from 'class-validator';
 
 import { ApiProperty } from '@nestjs/swagger';
 
 export class GetMemberDto {
   @ApiProperty()
   @Expose()
-  @IsNumber()
+  @IsUUID()
   id!: string;
 
   @ApiProperty()

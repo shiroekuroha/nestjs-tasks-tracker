@@ -33,7 +33,7 @@ export class ProjectService {
     return await this.prisma.project.count();
   }
 
-  async getProject(id: number): Promise<GetProjectDto | null> {
+  async getProject(id: string): Promise<GetProjectDto | null> {
     return plainToInstance(
       GetProjectDto,
       await this.prisma.project.findUnique({ where: { id: id } }),
@@ -42,7 +42,7 @@ export class ProjectService {
   }
 
   async updateProject(
-    id: number,
+    id: string,
     data: UpdateProjectDto,
   ): Promise<GetProjectDto> {
     return plainToInstance(
@@ -54,7 +54,7 @@ export class ProjectService {
 
   async createProject(
     data: CreateProjectDto,
-    ownerId: number,
+    ownerId: string,
   ): Promise<GetProjectDto> {
     return plainToInstance(
       GetProjectDto,
@@ -72,7 +72,7 @@ export class ProjectService {
     );
   }
 
-  async deleteProject(id: number): Promise<GetProjectDto> {
+  async deleteProject(id: string): Promise<GetProjectDto> {
     return plainToInstance(
       GetProjectDto,
       await this.prisma.project.delete({ where: { id: id } }),
@@ -80,7 +80,7 @@ export class ProjectService {
     );
   }
 
-  async getProjectWhole(id: number): Promise<GetProjectWholeDto | null> {
+  async getProjectWhole(id: string): Promise<GetProjectWholeDto | null> {
     return plainToInstance(
       GetProjectWholeDto,
       await this.prisma.project.findUnique({
@@ -114,7 +114,7 @@ export class ProjectService {
     );
   }
 
-  async getProjectMembers(id: number): Promise<GetMemberRoleDto[]> {
+  async getProjectMembers(id: string): Promise<GetMemberRoleDto[]> {
     return plainToInstance(
       GetMemberRoleDto,
       (
@@ -144,9 +144,9 @@ export class ProjectService {
   }
 
   async addProjectMember(
-    id: number,
-    memberId: number,
-    roleId: number | null = null,
+    id: string,
+    memberId: string,
+    roleId: string | null = null,
   ): Promise<GetProjectMemberDto> {
     return plainToInstance(
       GetProjectMemberDto,
@@ -162,11 +162,11 @@ export class ProjectService {
   }
 
   async reorderTaskGroup(
-    id: number,
+    id: string,
     data: GetTaskGroupReorderDto,
   ): Promise<GetTaskGroupDto[]> {
     const taskGroup = await this.prisma.project.findUnique({
-      where: { id: Number(id) },
+      where: { id: id },
       include: { taskGroup: { select: { id: true, position: true } } },
     });
 
@@ -204,8 +204,8 @@ export class ProjectService {
   }
 
   async removeProjectMember(
-    id: number,
-    memberId: number,
+    id: string,
+    memberId: string,
   ): Promise<GetProjectMemberDto> {
     return plainToInstance(
       GetProjectMemberDto,
@@ -222,9 +222,9 @@ export class ProjectService {
   }
 
   async changeProjectMemberRole(
-    id: number,
-    memberId: number,
-    roleId: number,
+    id: string,
+    memberId: string,
+    roleId: string,
   ): Promise<GetProjectMemberDto> {
     return plainToInstance(
       GetProjectMemberDto,

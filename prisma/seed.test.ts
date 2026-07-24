@@ -14,7 +14,7 @@ export class PrismaService extends PrismaClient {
 async function main() {
   const prisma: PrismaService = new PrismaService();
 
-  await prisma.member.createMany({
+  const member_data = {
     data: [
       {
         username: 'dnguyen1',
@@ -37,17 +37,17 @@ async function main() {
         address: null,
       },
     ],
-  });
+  };
 
-  await prisma.project.createMany({
+  const project_data = {
     data: [
       { name: 'Hydrogen', ownerId: 1 },
       { name: 'Helium', ownerId: 1 },
       { name: 'Lithium', ownerId: 1 },
     ],
-  });
+  };
 
-  await prisma.taskGroup.createMany({
+  const taskGroup_data = {
     data: [
       {
         name: 'Week 1',
@@ -68,9 +68,9 @@ async function main() {
         projectId: 1,
       },
     ],
-  });
+  };
 
-  await prisma.task.createMany({
+  const task_data = {
     data: [
       {
         name: 'Make Coffee',
@@ -100,9 +100,9 @@ async function main() {
         taskGroupId: 1,
       },
     ],
-  });
+  };
 
-  await prisma.role.createMany({
+  const role_data = {
     data: [
       {
         name: 'Administrator',
@@ -114,9 +114,9 @@ async function main() {
         name: 'Project Contributor',
       },
     ],
-  });
+  };
 
-  await prisma.permission.createMany({
+  const permission_data = {
     data: [
       {
         name: 'projects:update',
@@ -146,9 +146,9 @@ async function main() {
         name: 'tasks:delete',
       },
     ],
-  });
+  };
 
-  await prisma.rolePermission.createMany({
+  const rolePermission_data = {
     data: [
       {
         roleId: 1,
@@ -223,9 +223,9 @@ async function main() {
         permissionId: 9,
       },
     ],
-  });
+  };
 
-  await prisma.projectMember.createMany({
+  const data = {
     data: [
       {
         projectId: 1,
@@ -243,7 +243,7 @@ async function main() {
         roleId: 1,
       },
     ],
-  });
+  };
 
   console.log('Database(Test) seeded!');
 

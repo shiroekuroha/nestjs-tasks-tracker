@@ -27,7 +27,7 @@ export class RoleService {
     return await this.prisma.role.count();
   }
 
-  async getRole(id: number): Promise<GetRoleDto | null> {
+  async getRole(id: string): Promise<GetRoleDto | null> {
     return plainToInstance(
       GetRoleDto,
       await this.prisma.role.findUnique({ where: { id: id } }),
@@ -35,7 +35,7 @@ export class RoleService {
     );
   }
 
-  async updateRole(id: number, data: UpdateRoleDto): Promise<GetRoleDto> {
+  async updateRole(id: string, data: UpdateRoleDto): Promise<GetRoleDto> {
     return plainToInstance(
       GetRoleDto,
       await this.prisma.role.update({
@@ -54,7 +54,7 @@ export class RoleService {
     );
   }
 
-  async deleteRole(id: number): Promise<GetRoleDto> {
+  async deleteRole(id: string): Promise<GetRoleDto> {
     return plainToInstance(
       GetRoleDto,
       await this.prisma.role.delete({ where: { id: id } }),
@@ -62,7 +62,7 @@ export class RoleService {
     );
   }
 
-  async rolePermissions(id: number): Promise<GetPermissionDto[]> {
+  async rolePermissions(id: string): Promise<GetPermissionDto[]> {
     return plainToInstance(
       GetPermissionDto,
       (

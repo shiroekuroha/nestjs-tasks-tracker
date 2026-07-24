@@ -9,6 +9,7 @@ import {
   NotFoundException,
   Param,
   ParseIntPipe,
+  ParseUUIDPipe,
   Post,
   Put,
   Query,
@@ -74,7 +75,7 @@ export class ProjectController {
   @UseGuards(ProjectGuard)
   @HttpCode(HttpStatus.OK)
   async getProject(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
   ): Promise<GetProjectDto> {
     const result = await this.projectService.getProject(id);
 
@@ -87,7 +88,7 @@ export class ProjectController {
   @UseGuards(ProjectGuard)
   @HttpCode(HttpStatus.OK)
   async updateProject(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() data: UpdateProjectDto,
   ): Promise<GetProjectDto> {
     return await this.projectService.updateProject(id, data);
@@ -98,7 +99,7 @@ export class ProjectController {
   @HttpCode(HttpStatus.CREATED)
   async createProject(
     @Body() data: CreateProjectDto,
-    @Param('ownerId', ParseIntPipe) ownerId: number,
+    @Param('ownerId', ParseUUIDPipe) ownerId: string,
   ): Promise<GetProjectDto> {
     return await this.projectService.createProject(data, ownerId);
   }
@@ -107,7 +108,7 @@ export class ProjectController {
   @UseGuards(ProjectGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteProject(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
   ): Promise<GetProjectDto> {
     return await this.projectService.deleteProject(id);
   }
@@ -116,7 +117,7 @@ export class ProjectController {
   @UseGuards(ProjectGuard)
   @HttpCode(HttpStatus.OK)
   async reorderProject(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() data: GetTaskGroupReorderDto,
   ): Promise<GetTaskGroupDto[]> {
     return await this.projectService.reorderTaskGroup(id, data);
@@ -126,7 +127,7 @@ export class ProjectController {
   @UseGuards(ProjectGuard)
   @HttpCode(HttpStatus.OK)
   async getProjectWhole(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
   ): Promise<GetProjectWholeDto> {
     const result = await this.projectService.getProjectWhole(id);
 
@@ -143,7 +144,7 @@ export class ProjectController {
   @UseGuards(ProjectMemberGuard)
   @HttpCode(HttpStatus.OK)
   async getProjectMembers(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
   ): Promise<GetMemberRoleDto[]> {
     return await this.projectService.getProjectMembers(id);
   }
@@ -152,9 +153,9 @@ export class ProjectController {
   @UseGuards(ProjectMemberGuard)
   @HttpCode(HttpStatus.OK)
   async addProjectMember(
-    @Param('id', ParseIntPipe) id: number,
-    @Param('memberId', ParseIntPipe) memberId: number,
-    @Query('roleId', new ParseIntPipe({ optional: true })) role_id: number,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('memberId', ParseUUIDPipe) memberId: string,
+    @Query('roleId', new ParseUUIDPipe({ optional: true })) role_id: string,
   ): Promise<GetProjectMemberDto> {
     return await this.projectService.addProjectMember(
       id,
@@ -167,8 +168,8 @@ export class ProjectController {
   @UseGuards(ProjectMemberGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async removeProjectMember(
-    @Param('id', ParseIntPipe) id: number,
-    @Param('memberId', ParseIntPipe) memberId: number,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('memberId', ParseUUIDPipe) memberId: string,
   ): Promise<GetProjectMemberDto> {
     return await this.projectService.removeProjectMember(id, memberId);
   }
@@ -177,9 +178,9 @@ export class ProjectController {
   @UseGuards(ProjectMemberGuard)
   @HttpCode(HttpStatus.OK)
   async changeProjectMemberRole(
-    @Param('id', ParseIntPipe) id: number,
-    @Param('memberId', ParseIntPipe) memberId: number,
-    @Param('roleId', ParseIntPipe) roleId: number,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('memberId', ParseUUIDPipe) memberId: string,
+    @Param('roleId', ParseUUIDPipe) roleId: string,
   ): Promise<GetProjectMemberDto> {
     return await this.projectService.changeProjectMemberRole(
       id,

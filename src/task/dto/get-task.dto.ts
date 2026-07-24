@@ -4,6 +4,7 @@ import {
   IsEnum,
   IsNumber,
   IsString,
+  IsUUID,
   ValidateIf,
 } from 'class-validator';
 
@@ -13,8 +14,8 @@ import { StatusType } from '@prisma/client';
 export class GetTaskDto {
   @ApiProperty()
   @Expose()
-  @IsNumber()
-  id!: number;
+  @IsUUID()
+  id!: string;
 
   @ApiProperty()
   @Expose()

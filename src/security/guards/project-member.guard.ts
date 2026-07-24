@@ -15,8 +15,8 @@ export class ProjectMemberGuard implements CanActivate {
   constructor(private prisma: PrismaService) {}
 
   async getPermissions(
-    projectId: number,
-    memberId: number,
+    projectId: string,
+    memberId: string,
   ): Promise<GetPermissionDto[]> {
     return (
       (
@@ -51,9 +51,9 @@ export class ProjectMemberGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const authId: number = Number(request['user'].sub);
-    const projectId: number = Number(request.params['id']);
-    const memberId: number = Number(request.params['memberId']);
+    const authId: string = request['user'].sub;
+    const projectId: string = request.params['id'];
+    const memberId: string = request.params['memberId'];
 
     // * GET
     if (request.method == 'GET') {

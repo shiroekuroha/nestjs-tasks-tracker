@@ -29,7 +29,7 @@ export class TaskGroupService {
     return await this.prisma.taskGroup.count();
   }
 
-  async getTaskGroup(id: number): Promise<GetTaskGroupDto | null> {
+  async getTaskGroup(id: string): Promise<GetTaskGroupDto | null> {
     return plainToInstance(
       GetTaskGroupDto,
       await this.prisma.taskGroup.findUnique({ where: { id: id } }),
@@ -40,7 +40,7 @@ export class TaskGroupService {
   }
 
   async updateTaskGroup(
-    id: number,
+    id: string,
     data: UpdateTaskGroupDto,
   ): Promise<GetTaskGroupDto> {
     return plainToInstance(
@@ -56,8 +56,8 @@ export class TaskGroupService {
   }
 
   async relinkTaskGroup(
-    id: number,
-    projectId: number,
+    id: string,
+    projectId: string,
   ): Promise<{ result: string }> {
     const result = await this.prisma.$transaction(async (tx) => {
       const max = await tx.taskGroup.aggregate({
@@ -81,9 +81,9 @@ export class TaskGroupService {
     return { result: 'Transaction is good!' };
   }
 
-  async reorderTask(id: number, data: GetTaskReorderDto): Promise<any> {
+  async reorderTask(id: string, data: GetTaskReorderDto): Promise<any> {
     const taskGroup = await this.prisma.taskGroup.findUnique({
-      where: { id: Number(id) },
+      where: { id: id },
       include: { task: { select: { id: true, position: true } } },
     });
 
@@ -118,7 +118,7 @@ export class TaskGroupService {
 
   async createTaskGroup(
     data: CreateTaskGroupDto,
-    projectId: number,
+    projectId: string,
   ): Promise<GetTaskGroupDto> {
     return plainToInstance(
       GetTaskGroupDto,
@@ -144,7 +144,7 @@ export class TaskGroupService {
     );
   }
 
-  async deleteTaskGroup(id: number): Promise<GetTaskGroupDto> {
+  async deleteTaskGroup(id: string): Promise<GetTaskGroupDto> {
     return plainToInstance(
       GetTaskGroupDto,
       await this.prisma.taskGroup.delete({ where: { id: id } }),

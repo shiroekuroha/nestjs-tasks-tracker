@@ -18,7 +18,7 @@ export class TaskGuard implements CanActivate {
     private prisma: PrismaService,
   ) {}
 
-  async getOwnerIdFromTaskGroupId(taskGroupId: number): Promise<number | null> {
+  async getOwnerIdFromTaskGroupId(taskGroupId: string): Promise<string | null> {
     return (
       (
         await this.prisma.taskGroup.findUnique({
@@ -35,7 +35,7 @@ export class TaskGuard implements CanActivate {
     );
   }
 
-  async getOwnerId(taskId: number): Promise<number | null> {
+  async getOwnerId(taskId: string): Promise<string | null> {
     return (
       (
         await this.prisma.task.findUnique({
@@ -57,8 +57,8 @@ export class TaskGuard implements CanActivate {
   }
 
   async getPermissionsFromTaskGroupId(
-    taskGroupId: number,
-    memberId: number,
+    taskGroupId: string,
+    memberId: string,
   ): Promise<GetPermissionDto[]> {
     return (
       (
@@ -98,8 +98,8 @@ export class TaskGuard implements CanActivate {
   }
 
   async getPermissions(
-    taskId: number,
-    memberId: number,
+    taskId: string,
+    memberId: string,
   ): Promise<GetPermissionDto[]> {
     return (
       (
@@ -144,8 +144,8 @@ export class TaskGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const authId: number = Number(request['user'].sub);
-    const taskId: number = Number(request.params['id']);
+    const authId: string = request['user'].sub;
+    const taskId: string = request.params['id'];
 
     // * GET
     if (request.method == 'GET') {
@@ -200,10 +200,10 @@ export class TaskGuard implements CanActivate {
     }
 
     // * POST
-    if (request.method === 'POST' && Number(request.params['taskGroupId'])) {
+    if (request.method === 'POST' && request.params['taskGroupId']) {
       if (
         (await this.getOwnerIdFromTaskGroupId(
-          Number(request.params['taskGroupId']),
+          request.params['taskGroupId'],
         )) === authId
       ) {
         return true;
@@ -211,7 +211,7 @@ export class TaskGuard implements CanActivate {
 
       const permissions: GetPermissionDto[] =
         await this.getPermissionsFromTaskGroupId(
-          Number(request.params['taskGroupId']),
+          request.params['taskGroupId'],
           authId,
         );
 

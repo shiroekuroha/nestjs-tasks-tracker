@@ -32,7 +32,7 @@ export class TaskService {
     return await this.prisma.task.count();
   }
 
-  async getTask(id: number): Promise<GetTaskDto | null> {
+  async getTask(id: string): Promise<GetTaskDto | null> {
     return plainToInstance(
       GetTaskDto,
       await this.prisma.task.findUnique({ where: { id: id } }),
@@ -42,7 +42,7 @@ export class TaskService {
     );
   }
 
-  async updateTask(id: number, data: UpdateTaskDto): Promise<GetTaskDto> {
+  async updateTask(id: string, data: UpdateTaskDto): Promise<GetTaskDto> {
     return plainToInstance(
       GetTaskDto,
       await this.prisma.task.update({
@@ -56,8 +56,8 @@ export class TaskService {
   }
 
   async relinkTask(
-    id: number,
-    taskGroupId: number,
+    id: string,
+    taskGroupId: string,
   ): Promise<{ result: string }> {
     const result = await this.prisma.$transaction(async (tx) => {
       const max = await tx.task.aggregate({
@@ -83,7 +83,7 @@ export class TaskService {
 
   async createTask(
     data: CreateTaskDto,
-    taskGroupId: number,
+    taskGroupId: string,
   ): Promise<GetTaskDto> {
     return plainToInstance(
       GetTaskDto,
@@ -111,7 +111,7 @@ export class TaskService {
     );
   }
 
-  async deleteTask(id: number): Promise<GetTaskDto> {
+  async deleteTask(id: string): Promise<GetTaskDto> {
     return plainToInstance(
       GetTaskDto,
       await this.prisma.task.delete({ where: { id: id } }),
@@ -122,7 +122,7 @@ export class TaskService {
   }
 
   async addAttachment(
-    tid: number,
+    id: string,
     data: CreateAttachmentDto,
   ): Promise<GetAttachmentDto> {
     return plainToInstance(
@@ -131,14 +131,14 @@ export class TaskService {
         data: {
           name: data.name,
           data: new Uint8Array(data.data),
-          task: { connect: { id: tid } },
+          task: { connect: { id: id } },
         },
       }),
       { excludeExtraneousValues: true },
     );
   }
 
-  async removeAttachment(id: number): Promise<GetAttachmentDto> {
+  async removeAttachment(id: string): Promise<GetAttachmentDto> {
     return plainToInstance(
       GetAttachmentDto,
       await this.prisma.attachment.delete({
@@ -149,7 +149,7 @@ export class TaskService {
   }
 
   async addCheckList(
-    tid: number,
+    id: string,
     data: CreateCheckListDto,
   ): Promise<GetChecklistDto> {
     return plainToInstance(
@@ -157,14 +157,14 @@ export class TaskService {
       await this.prisma.checklist.create({
         data: {
           ...data,
-          task: { connect: { id: tid } },
+          task: { connect: { id: id } },
         },
       }),
       { excludeExtraneousValues: true },
     );
   }
 
-  async removeCheckList(id: number): Promise<GetChecklistDto> {
+  async removeCheckList(id: string): Promise<GetChecklistDto> {
     return plainToInstance(
       GetChecklistDto,
       await this.prisma.checklist.delete({

@@ -1,6 +1,19 @@
 import {
-    Body, Controller, DefaultValuePipe, Delete, Get, HttpCode, HttpStatus, NotFoundException, Param,
-    ParseIntPipe, Post, Put, Query, UseGuards
+  Body,
+  Controller,
+  DefaultValuePipe,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  NotFoundException,
+  Param,
+  ParseIntPipe,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 
 import { AuthGuard } from '../security/guards/auth.guard';
@@ -53,7 +66,7 @@ export class RoleController {
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  async getRole(@Param('id', ParseIntPipe) id: number): Promise<GetRoleDto> {
+  async getRole(@Param('id', ParseUUIDPipe) id: string): Promise<GetRoleDto> {
     const result = await this.roleService.getRole(id);
 
     if (result) return result;
@@ -64,7 +77,7 @@ export class RoleController {
   @Put(':id')
   @HttpCode(HttpStatus.OK)
   async updateRole(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() data: UpdateRoleDto,
   ): Promise<GetRoleDto> {
     return await this.roleService.updateRole(id, data);
@@ -78,14 +91,16 @@ export class RoleController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteRole(@Param('id', ParseIntPipe) id: number): Promise<GetRoleDto> {
+  async deleteRole(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<GetRoleDto> {
     return await this.roleService.deleteRole(id);
   }
 
   @Get(':id/permissions')
   @HttpCode(HttpStatus.OK)
   async getRolePermissions(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
   ): Promise<GetPermissionDto[]> {
     return await this.roleService.rolePermissions(id);
   }

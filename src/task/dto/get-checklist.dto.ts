@@ -1,13 +1,13 @@
 import { Expose } from 'class-transformer';
-import { IsBoolean, IsNumber, IsString } from 'class-validator';
+import { IsBoolean, IsNumber, IsString, IsUUID } from 'class-validator';
 
 import { ApiProperty } from '@nestjs/swagger';
 
 export class GetChecklistDto {
   @ApiProperty()
   @Expose()
-  @IsNumber()
-  id!: number;
+  @IsUUID()
+  id!: string;
 
   @ApiProperty()
   @Expose()

@@ -9,6 +9,7 @@ import {
   NotFoundException,
   Param,
   ParseIntPipe,
+  ParseUUIDPipe,
   Post,
   Put,
   Query,
@@ -69,7 +70,7 @@ export class TaskController {
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  async getTask(@Param('id', ParseIntPipe) id: number): Promise<GetTaskDto> {
+  async getTask(@Param('id', ParseUUIDPipe) id: string): Promise<GetTaskDto> {
     const result = await this.taskService.getTask(id);
 
     if (result) return result;
@@ -80,7 +81,7 @@ export class TaskController {
   @Put(':id')
   @HttpCode(HttpStatus.OK)
   async updateTask(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() data: UpdateTaskDto,
   ): Promise<GetTaskDto> {
     return await this.taskService.updateTask(id, data);
@@ -89,8 +90,8 @@ export class TaskController {
   @Put(':id/:taskGroupId')
   @HttpCode(HttpStatus.OK)
   async relinkTask(
-    @Param('id', ParseIntPipe) id: number,
-    @Param('taskGroupId', ParseIntPipe) taskGroupId: number,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('taskGroupId', ParseUUIDPipe) taskGroupId: string,
   ): Promise<{ result: string }> {
     return await this.taskService.relinkTask(id, taskGroupId);
   }
@@ -99,21 +100,23 @@ export class TaskController {
   @HttpCode(HttpStatus.CREATED)
   async createTask(
     @Body() data: CreateTaskDto,
-    @Param('taskGroupId', ParseIntPipe) taskGroupId: number,
+    @Param('taskGroupId', ParseUUIDPipe) taskGroupId: string,
   ): Promise<GetTaskDto | null> {
     return await this.taskService.createTask(data, taskGroupId);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteTask(@Param('id', ParseIntPipe) id: number): Promise<GetTaskDto> {
+  async deleteTask(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<GetTaskDto> {
     return this.taskService.deleteTask(id);
   }
 
   @Post('attachments/:id')
   @HttpCode(HttpStatus.CREATED)
   async createAttachment(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() data: CreateAttachmentDto,
   ): Promise<GetAttachmentDto> {
     return await this.taskService.addAttachment(id, data);
@@ -122,7 +125,7 @@ export class TaskController {
   @Delete('attachments/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteAttachment(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
   ): Promise<GetAttachmentDto> {
     return await this.taskService.removeAttachment(id);
   }
@@ -130,7 +133,7 @@ export class TaskController {
   @Post('checklists/:id')
   @HttpCode(HttpStatus.CREATED)
   async createChecklist(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() data: CreateCheckListDto,
   ): Promise<GetChecklistDto> {
     return await this.taskService.addCheckList(id, data);
@@ -139,7 +142,7 @@ export class TaskController {
   @Delete('checklists/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteChecklist(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
   ): Promise<GetChecklistDto> {
     return await this.taskService.removeCheckList(id);
   }

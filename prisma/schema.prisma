@@ -8,7 +8,7 @@ datasource db {
 }
 
 model Member {
-    id             Int             @id @default(autoincrement())
+    id             String          @id @default(uuid())
     username       String          @db.VarChar(50)
     password       String          @db.VarChar(50)
     active         Boolean         @default(true)
@@ -24,20 +24,20 @@ model Member {
 }
 
 model Project {
-    id            Int             @id @default(autoincrement())
+    id            String          @id @default(uuid())
     name          String          @db.VarChar(50)
-    ownerId       Int
+    ownerId       String
     member        Member          @relation(fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "Project_Owner_fk")
     projectMember ProjectMember[]
     taskGroup     TaskGroup[]
 }
 
 model TaskGroup {
-    id        Int     @id @default(autoincrement())
+    id        String  @id @default(uuid())
     name      String  @db.VarChar(50)
     color     String  @db.VarChar(9)
     position  Int
-    projectId Int
+    projectId String
     task      Task[]
     project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "TaskGroup_Project_fk")
 
@@ -46,7 +46,7 @@ model TaskGroup {
 }
 
 model Task {
-    id          Int          @id @default(autoincrement())
+    id          String       @id @default(uuid())
     name        String       @db.VarChar(50)
     description String
     position    Int
@@ -55,7 +55,7 @@ model Task {
     dueDate     DateTime?    @db.Timestamp(6)
     createdAt   DateTime     @default(now()) @db.Timestamp(6)
     updatedAt   DateTime     @default(now()) @updatedAt @db.Timestamp(6)
-    taskGroupId Int
+    taskGroupId String
     attachment  Attachment[]
     checklist   Checklist[]
     taskGroup   TaskGroup    @relation(fields: [taskGroupId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "Task_TaskGroup_fk")
@@ -66,25 +66,25 @@ model Task {
 }
 
 model Attachment {
-    id     Int    @id @default(autoincrement())
+    id     String @id @default(uuid())
     name   String @db.VarChar(50)
     data   Bytes
-    taskId Int
+    taskId String
     task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "Attachment_Task_fk")
 }
 
 model Checklist {
-    id          Int     @id @default(autoincrement())
+    id          String  @id @default(uuid())
     name        String  @db.VarChar(50)
     description String
     completed   Boolean
-    taskId      Int
+    taskId      String
     task        Task    @relation(fields: [taskId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "Checklist_Task_fk")
 }
 
 model TaskMember {
-    taskId   Int
-    memberId Int
+    taskId   String
+    memberId String
     member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade, onUpdate: NoAction)
     task     Task   @relation(fields: [taskId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
@@ -92,9 +92,9 @@ model TaskMember {
 }
 
 model ProjectMember {
-    projectId Int
-    memberId  Int
-    roleId    Int?
+    projectId String
+    memberId  String
+    roleId    String? @default(uuid())
     member    Member  @relation(fields: [memberId], references: [id], onDelete: Cascade, onUpdate: NoAction)
     project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction)
     role      Role?   @relation(fields: [roleId], references: [id], onUpdate: NoAction)
@@ -103,21 +103,21 @@ model ProjectMember {
 }
 
 model Role {
-    id             Int              @id @default(autoincrement())
+    id             String           @id @default(uuid())
     name           String           @unique @db.VarChar(50)
     projectMember  ProjectMember[]
     rolePermission RolePermission[]
 }
 
 model Permission {
-    id             Int              @id @default(autoincrement())
+    id             String           @id @default(uuid())
     name           String           @unique @db.VarChar(50)
     rolePermission RolePermission[]
 }
 
 model RolePermission {
-    roleId       Int
-    permissionId Int
+    roleId       String
+    permissionId String
     permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
     role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 

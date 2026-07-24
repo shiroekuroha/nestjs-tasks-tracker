@@ -18,7 +18,7 @@ export class TaskGroupGuard implements CanActivate {
     private prisma: PrismaService,
   ) {}
 
-  async getOwnerIdFromProjectId(projectId: number): Promise<number | null> {
+  async getOwnerIdFromProjectId(projectId: string): Promise<string | null> {
     return (
       (
         await this.prisma.project.findUnique({
@@ -31,7 +31,7 @@ export class TaskGroupGuard implements CanActivate {
     );
   }
 
-  async getOwnerId(taskGroupId: number): Promise<number | null> {
+  async getOwnerId(taskGroupId: string): Promise<string | null> {
     return (
       (
         await this.prisma.taskGroup.findUnique({
@@ -49,8 +49,8 @@ export class TaskGroupGuard implements CanActivate {
   }
 
   async getPermissionsFromProjectId(
-    projectId: number,
-    memberId: number,
+    projectId: string,
+    memberId: string,
   ): Promise<GetPermissionDto[]> {
     return (
       (
@@ -84,8 +84,8 @@ export class TaskGroupGuard implements CanActivate {
   }
 
   async getPermissions(
-    taskGroupId: number,
-    memberId: number,
+    taskGroupId: string,
+    memberId: string,
   ): Promise<GetPermissionDto[]> {
     return (
       (
@@ -130,8 +130,8 @@ export class TaskGroupGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const authId: number = Number(request['user'].sub);
-    const taskGroupId: number = Number(request.params['id']);
+    const authId: string = request['user'].sub;
+    const taskGroupId: string = request.params['id'];
 
     // * GET
     if (request.method == 'GET') {
@@ -188,18 +188,17 @@ export class TaskGroupGuard implements CanActivate {
     }
 
     // * POST
-    if (request.method === 'POST' && Number(request.params['projectId'])) {
+    if (request.method === 'POST' && request.params['projectId']) {
       if (
-        (await this.getOwnerIdFromProjectId(
-          Number(request.params['projectId']),
-        )) === authId
+        (await this.getOwnerIdFromProjectId(request.params['projectId'])) ===
+        authId
       ) {
         return true;
       }
 
       const permissions: GetPermissionDto[] =
         await this.getPermissionsFromProjectId(
-          Number(request.params['projectId']),
+          request.params['projectId'],
           authId,
         );
 

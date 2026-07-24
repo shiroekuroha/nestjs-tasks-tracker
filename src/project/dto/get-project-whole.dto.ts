@@ -4,6 +4,7 @@ import {
   IsEnum,
   IsNumber,
   IsString,
+  IsUUID,
   ValidateIf,
 } from 'class-validator';
 
@@ -17,8 +18,8 @@ import { GetChecklistDto } from '../../task/dto/get-checklist.dto';
 export class GetProjectMemberMiddleDto {
   @ApiProperty()
   @Expose()
-  @IsNumber()
-  projectId!: number;
+  @IsUUID()
+  projectId!: string;
 
   @ApiProperty()
   @Expose()
@@ -39,8 +40,8 @@ export class GetProjectMemberMiddleDto {
 export class GetProjectTaskGroupMiddleDto {
   @ApiProperty()
   @Expose()
-  @IsNumber()
-  id!: number;
+  @IsUUID()
+  id!: string;
 
   @ApiProperty()
   @Expose()
@@ -59,8 +60,8 @@ export class GetProjectTaskGroupMiddleDto {
 
   @ApiProperty()
   @Expose()
-  @IsNumber()
-  projectId!: number;
+  @IsUUID()
+  projectId!: string;
 
   @ApiProperty()
   @Expose()
@@ -71,8 +72,8 @@ export class GetProjectTaskGroupMiddleDto {
 export class GetProjectTaskMiddleDto {
   @ApiProperty()
   @Expose()
-  @IsNumber()
-  id!: number;
+  @IsUUID()
+  id!: string;
 
   @ApiProperty()
   @Expose()
@@ -134,8 +135,8 @@ export class GetProjectTaskMiddleDto {
 export class GetProjectWholeDto {
   @ApiProperty()
   @Expose()
-  @IsNumber()
-  id!: number;
+  @IsUUID()
+  id!: string;
 
   @ApiProperty()
   @Expose()

@@ -32,7 +32,7 @@ export class MemberService {
     return await this.prisma.member.count({ where: { active: true } });
   }
 
-  async getMemberProjectsById(id: number): Promise<GetProjectDto[]> {
+  async getMemberProjectsById(id: string): Promise<GetProjectDto[]> {
     return plainToInstance(
       GetProjectDto,
       (
@@ -78,7 +78,7 @@ export class MemberService {
     );
   }
 
-  async getMemberById(id: number): Promise<GetMemberDto | null> {
+  async getMemberById(id: string): Promise<GetMemberDto | null> {
     return plainToInstance(
       GetMemberDto,
       await this.prisma.member.findFirst({
@@ -103,7 +103,7 @@ export class MemberService {
   }
 
   async updateMemberById(
-    id: number,
+    id: string,
     data: UpdateMemberDto,
   ): Promise<GetMemberDto> {
     return plainToInstance(
@@ -158,7 +158,7 @@ export class MemberService {
     );
   }
 
-  async restoreMember(id: number): Promise<GetMemberDto> {
+  async restoreMember(id: string): Promise<GetMemberDto> {
     const targetUsername = (
       await this.prisma.member.findUnique({ where: { id: id } })
     )?.username;
@@ -183,7 +183,7 @@ export class MemberService {
     );
   }
 
-  async deleteMemberById(id: number): Promise<GetMemberDto> {
+  async deleteMemberById(id: string): Promise<GetMemberDto> {
     return plainToInstance(
       GetMemberDto,
       await this.prisma.member.update({

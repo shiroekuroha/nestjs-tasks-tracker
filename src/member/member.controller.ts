@@ -9,6 +9,7 @@ import {
   NotFoundException,
   Param,
   ParseIntPipe,
+  ParseUUIDPipe,
   Post,
   Put,
   Query,
@@ -68,7 +69,7 @@ export class MemberController {
   @Get('id/:id')
   @HttpCode(HttpStatus.OK)
   async getMemberById(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
   ): Promise<GetMemberDto> {
     const result = await this.memberService.getMemberById(id);
 
@@ -92,7 +93,7 @@ export class MemberController {
   @Get('id/:id/projects')
   @HttpCode(HttpStatus.OK)
   async getMemberProjectsById(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
   ): Promise<GetProjectDto[]> {
     return await this.memberService.getMemberProjectsById(id);
   }
@@ -108,7 +109,7 @@ export class MemberController {
   @Put('id/:id')
   @HttpCode(HttpStatus.OK)
   async updateMemberById(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() data: UpdateMemberDto,
   ): Promise<GetMemberDto> {
     return await this.memberService.updateMemberById(id, data);
@@ -134,7 +135,7 @@ export class MemberController {
   @HttpCode(HttpStatus.CREATED)
   @ApiCreatedResponse({ description: 'Member restored.' })
   async restoreMember(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
   ): Promise<GetMemberDto> {
     return await this.memberService.restoreMember(id);
   }
@@ -142,8 +143,8 @@ export class MemberController {
   @Delete('id/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteMemberById(
-    @Param('id', ParseIntPipe)
-    id: number,
+    @Param('id', ParseUUIDPipe)
+    id: string,
   ): Promise<GetMemberDto> {
     return await this.memberService.deleteMemberById(id);
   }

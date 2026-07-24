@@ -1,6 +1,19 @@
 import {
-    Body, Controller, DefaultValuePipe, Delete, Get, HttpCode, HttpStatus, NotFoundException, Param,
-    ParseIntPipe, Post, Put, Query, UseGuards
+  Body,
+  Controller,
+  DefaultValuePipe,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  NotFoundException,
+  Param,
+  ParseIntPipe,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 
 import { AuthGuard } from '../security/guards/auth.guard';
@@ -55,7 +68,7 @@ export class TaskGroupController {
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   async getTaskGroup(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
   ): Promise<GetTaskGroupDto> {
     const result = await this.taskGroupService.getTaskGroup(id);
 
@@ -67,7 +80,7 @@ export class TaskGroupController {
   @Put(':id')
   @HttpCode(HttpStatus.OK)
   async updateTaskGroup(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() data: UpdateTaskGroupDto,
   ): Promise<GetTaskGroupDto> {
     return await this.taskGroupService.updateTaskGroup(id, data);
@@ -76,7 +89,7 @@ export class TaskGroupController {
   @Put(':id/reorder')
   @HttpCode(HttpStatus.OK)
   async reorderTasks(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() data: GetTaskReorderDto,
   ): Promise<any> {
     return await this.taskGroupService.reorderTask(id, data);
@@ -85,8 +98,8 @@ export class TaskGroupController {
   @Put(':id/:projectId')
   @HttpCode(HttpStatus.OK)
   async relinkTaskGroup(
-    @Param('id', ParseIntPipe) id: number,
-    @Param('projectId', ParseIntPipe) projectId: number,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('projectId', ParseUUIDPipe) projectId: string,
   ): Promise<{ result: string }> {
     return await this.taskGroupService.relinkTaskGroup(id, projectId);
   }
@@ -95,7 +108,7 @@ export class TaskGroupController {
   @HttpCode(HttpStatus.CREATED)
   async createTaskGroup(
     @Body() data: CreateTaskGroupDto,
-    @Param('projectId', ParseIntPipe) projectId: number,
+    @Param('projectId', ParseUUIDPipe) projectId: string,
   ): Promise<GetTaskGroupDto> {
     return await this.taskGroupService.createTaskGroup(data, projectId);
   }
@@ -103,7 +116,7 @@ export class TaskGroupController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteTaskGroup(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
   ): Promise<GetTaskGroupDto> {
     return await this.taskGroupService.deleteTaskGroup(id);
   }
